@@ -1,0 +1,32 @@
+#pragma once
+#include <SDL2/SDL_error.h>
+#include <SDL2/SDL_render.h>
+
+#include <stdexcept>
+
+#include "../utils/clean_ptr.hpp"
+
+namespace SDL {
+
+using Window = std::clean_ptr<SDL_Window, SDL_DestroyWindow>;
+using Texture = std::clean_ptr<SDL_Texture, SDL_DestroyTexture>;
+using Surface = std::clean_ptr<SDL_Surface, SDL_FreeSurface>;
+using Renderer = std::clean_ptr<SDL_Renderer, SDL_DestroyRenderer>;
+
+[[noreturn]] inline void raise() {
+    const char *error = SDL_GetError();
+    throw std::runtime_error{error};
+}
+
+template <typename Ptr>
+[[nodiscard]] Ptr *check(Ptr *ptr) {
+    if (ptr == nullptr) raise();
+    return ptr;
+}
+
+inline int check(const int code) {
+    if (code < 0) raise();
+    return code;
+}
+
+}  // namespace SDL

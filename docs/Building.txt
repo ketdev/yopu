@@ -1,0 +1,18 @@
+-- Build ----------------------------------------------------------------------
+
+1. Open cmd
+
+2. Load emcc environment:
+    @cmd /k call C:\ket\dev\system\emsdk\emsdk_env.bat
+
+3. Run the makefile:
+    mingw32-make
+
+-- Run ------------------------------------------------------------------------
+1. node server.js
+
+-------------------------------------------------------------------------------
+
+To display emcc ported libraries:
+    emcc --show-ports
+

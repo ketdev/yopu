@@ -1,0 +1,11 @@
+Language: C++
+    C++ is considered the standard for serious game development
+    One of my favourite languages anyways
+    (JS/Typescript) - Not serious, might be quicker for a POC
+    (C#) - Nice alternative to C++, and has Unity, (a big maybe)
+
+Framework: SDL
+    SDL - for quick small games, less overhead + can compile to WebAssembly without huge loading screen
+    Unity (C#) - Most popular entry level, but has its own ecosystem, is very different from other engines and frameworks.
+    Unreal (C++) - Might be the next used platform if sticking with C++
+
