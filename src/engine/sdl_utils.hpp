@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL2/SDL_error.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_mixer.h>
 
 #include <stdexcept>
 
@@ -12,6 +13,7 @@ using Window = std::clean_ptr<SDL_Window, SDL_DestroyWindow>;
 using Texture = std::clean_ptr<SDL_Texture, SDL_DestroyTexture>;
 using Surface = std::clean_ptr<SDL_Surface, SDL_FreeSurface>;
 using Renderer = std::clean_ptr<SDL_Renderer, SDL_DestroyRenderer>;
+using MixMusic = std::clean_ptr<Mix_Music, Mix_FreeMusic>;
 
 [[noreturn]] inline void raise() {
     const char *error = SDL_GetError();

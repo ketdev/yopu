@@ -1,13 +1,13 @@
 #pragma once
 #include "sdl_utils.hpp"
-#include "game.hpp"
+#include "igame.hpp"
 
 class Application {
    public:
     Application();
     ~Application();
 
-    void run(Game* game);
+    void run(IGame* game);
 
    private:
     uint64_t _frame;
@@ -16,7 +16,7 @@ class Application {
     void _loop();
 
     SDL::Renderer _renderer;
-    Game* _game;
+    IGame* _game;
 
 #ifdef __EMSCRIPTEN__
     friend void app_loop_wrap(Application*);

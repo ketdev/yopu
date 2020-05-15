@@ -9,4 +9,9 @@ struct Loader {
         return SDL::Texture{SDL::check(
             SDL_CreateTextureFromSurface(renderer.get(), surface.get()))};
     }
+
+    static SDL::MixMusic loadMusic(std::string path) {
+        SDL::MixMusic music{ SDL::check(Mix_LoadMUS(path.c_str())) };
+        return music;
+    }
 };

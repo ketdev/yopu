@@ -34,3 +34,4 @@ node_modules/
 dist/
 .awcache/
 package-lock.json
+scraps/

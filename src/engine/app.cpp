@@ -1,6 +1,7 @@
 #include "app.hpp"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
@@ -31,23 +32,29 @@ const int SCREEN_HEIGHT = 480;
 
 Application::Application()
     : _frame(0), _running(false), _visible(false), _game(nullptr) {
-    SDL::check(SDL_Init(SDL_INIT_VIDEO));
+    SDL::check(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO));
+    SDL::check(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024));
 }
 
-Application::~Application() { SDL_Quit(); }
+Application::~Application() { 
+    Mix_CloseAudio();
+    SDL_Quit(); 
+}
 
 #ifdef __EMSCRIPTEN__
 void app_loop_wrap(Application* app) { app->_loop(); }
 #endif
 
-void Application::run(Game* game) {
+void Application::run(IGame* game) {
     _game = game;
 
     // Make the largest window possible with an integer scale factor
-    SDL_Rect bounds;
-    SDL::check(SDL_GetDisplayUsableBounds(0, &bounds));
-    const int scaleFactor = std::max(
-        1, std::min(bounds.w / SCREEN_WIDTH, bounds.h / SCREEN_HEIGHT));
+    // SDL_Rect bounds;
+    // SDL::check(SDL_GetDisplayUsableBounds(0, &bounds));
+    // const int scaleFactor = std::max(
+    //     1, std::min(bounds.w / SCREEN_WIDTH, bounds.h / SCREEN_HEIGHT));
+
+    const int scaleFactor = 1;
 
     SDL::Window window{SDL::check(
         SDL_CreateWindow("Puyo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -96,10 +103,11 @@ void Application::_loop() {
                 if (sym == SDLK_ESCAPE) {
                     _running = false;
                 }
+                _game->input(e.key.keysym.scancode, false);
                 break;
             }
             case SDL_KEYDOWN: {
-                _game->input(e.key.keysym.scancode);
+                _game->input(e.key.keysym.scancode, true);
                 break;
             }
         }

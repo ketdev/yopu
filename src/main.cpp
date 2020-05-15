@@ -4,12 +4,12 @@
 #include <iostream>
 
 #include "engine/app.hpp"
-#include "game/boardgame.hpp"
+#include "game/game.hpp"
 
 extern "C" int main(int, char *[]) {
     try {
         Application app;
-        BoardGame game;
+        Game game;
         app.run(&game);
     } catch (std::exception &e) {
         std::cout << e.what() << '\n';
