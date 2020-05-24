@@ -43,7 +43,7 @@ namespace player {
 		uint32_t spawnPoolIndex = {};
 
 		Board(uint8_t rows, uint8_t cols) {
-			grid.resize(cols);
+			grid.resize(rows);
 			for (auto& row : grid) {
 				row.resize(cols);
 			}

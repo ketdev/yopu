@@ -31,11 +31,16 @@ namespace puyo {
     };
     struct GridIndex {
         int x, y;
+        int drop = 0;
     };
     struct ControlAxis {
-        uint8_t animationCounter = 0;    // blinking animation
+        bool shift = false;              // if already performing a lateral move
         uint8_t rotationCounter = 0;     // for double tap
-        uint8_t midHeightCrossings = 0;  // prevent upward push more than 8 times
+        uint8_t graceCounter = 0;
+        uint8_t pushupCounter = 0;      // prevent upward push 8 times
+
+        bool locked = false;            // once the player should not have control over it
+
 
         entt::entity slave; // can have one slave only
     };
@@ -51,6 +56,9 @@ namespace puyo {
         int srcDx, srcDy;
         int dstDx, dstDy;
         int frames;
+    };
+    struct BlinkingAnimation {
+        uint8_t counter = 0;            // blinking animation
     };
 
     // ------------------------

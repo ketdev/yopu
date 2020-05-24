@@ -35,8 +35,8 @@ private: // factories
     entt::entity makePuyo(entt::entity parent, puyo::Type type, uint8_t x, uint8_t y);
 
 private:  // systems
-    void updateTranslationAnimation();
-    void updateRotationAnimation();
+    void applyTranslationAnimation();
+    void applyRotationAnimation();
     void drawPuyos(SDL::Renderer& renderer);
     void updateInput();
     void spawn();

@@ -49,8 +49,8 @@ bool Game::logic() {
 void Game::render(SDL::Renderer& renderer, int frame) {
     //std::cout << "Frame: " << frame << std::endl;
     
-    updateTranslationAnimation();
-    updateRotationAnimation();
+    applyTranslationAnimation();
+    applyRotationAnimation();
     drawPuyos(renderer);
 }
 
@@ -68,7 +68,7 @@ entt::entity Game::makePuyo(entt::entity parent, puyo::Type type, uint8_t x, uin
     auto puyo = _reg.create();
     _reg.emplace<puyo::Parent>(puyo, parent);       // Associated player entity
     _reg.emplace<puyo::Color>(puyo, type);
-    _reg.emplace<puyo::GridIndex>(puyo, x, y);
+    _reg.emplace<puyo::GridIndex>(puyo, x, y, 0);
 
     // TODO: render position based on board, shift, etc...
     _reg.emplace<puyo::RenderPosition>(puyo, x * TILE_SIZE, y * TILE_SIZE);
@@ -77,7 +77,7 @@ entt::entity Game::makePuyo(entt::entity parent, puyo::Type type, uint8_t x, uin
 
 // -- Systems --
 
-void Game::updateTranslationAnimation() {
+void Game::applyTranslationAnimation() {
     // Apply translation animation    
     auto view = _reg.view<puyo::RenderPosition, puyo::TranslateAnimation>();
     for (auto& e : view) {
@@ -104,7 +104,7 @@ void Game::updateTranslationAnimation() {
     }    
 }
 
-void Game::updateRotationAnimation() {
+void Game::applyRotationAnimation() {
     // Apply translation animation    
     auto view = _reg.view<puyo::RenderPosition, puyo::RotateAnimation>();
     for (auto& e : view) {
@@ -159,13 +159,13 @@ void Game::drawPuyos(SDL::Renderer& renderer) {
         auto& pos = view.get<puyo::RenderPosition>(e);
 
         // Axis blinking animation
-        auto axisBlink = _reg.has<puyo::ControlAxis>(e);
-        if (axisBlink) {
-            auto& axis = _reg.get<puyo::ControlAxis>(e);
-            axis.animationCounter++;
+        auto blink = _reg.has<puyo::BlinkingAnimation>(e);
+        if (blink) {
+            auto& axis = _reg.get<puyo::BlinkingAnimation>(e);
+            axis.counter++;
             // 10 frames on, 10 off
-            if ((axis.animationCounter / 10) % 2 == 0) {
-                axisBlink = false;
+            if ((axis.counter / BLINKING_FRAMES) % 2 == 0) {
+                blink = false;
             }
         }
 
@@ -173,23 +173,23 @@ void Game::drawPuyos(SDL::Renderer& renderer) {
         switch (type) {
         case puyo::Type::Red:
             ix = 0, iy = 0;
-            if (axisBlink) { iy = 9; }
+            if (blink) { iy = 9; }
             break;
         case puyo::Type::Green:
             ix = 0, iy = 1;
-            if (axisBlink) { ix = 1, iy = 9; }
+            if (blink) { ix = 1, iy = 9; }
             break;
         case puyo::Type::Blue:
             ix = 0, iy = 2;
-            if (axisBlink) { ix = 2, iy = 9; }
+            if (blink) { ix = 2, iy = 9; }
             break;
         case puyo::Type::Yellow:
             ix = 0, iy = 3;
-            if (axisBlink) { ix = 3, iy = 9; }
+            if (blink) { ix = 3, iy = 9; }
             break;
         case puyo::Type::Violet:
             ix = 0, iy = 4;
-            if (axisBlink) { ix = 4, iy = 9; }
+            if (blink) { ix = 4, iy = 9; }
             break;
         case puyo::Type::Garbage:
             ix = 6, iy = 12;
@@ -269,6 +269,7 @@ void Game::spawn() {
             // Set first spawned puyo as controlled
             if (axis == noentity) {
                 _reg.emplace<puyo::ControlAxis>(puyo);
+                _reg.emplace<puyo::BlinkingAnimation>(puyo);
                 axis = puyo;
             }
             // Set slave parent to axis and axis slave to puyo
@@ -288,6 +289,32 @@ void Game::control() {
             || (pos.y >= _settings.boardRows) || (pos.y < 0)
             || (noentity != board.grid[pos.y][pos.x]);
     };
+    static auto setMove = [&](entt::entity e, int dx, int dy, int frames) {
+        if (_reg.has<puyo::TranslateAnimation>(e)) {
+            auto& anim = _reg.get<puyo::TranslateAnimation>(e);
+            anim.dx += dx * TILE_SIZE;
+            anim.dy += dy * TILE_SIZE;
+            anim.frames = frames;
+        }
+        else {
+            _reg.emplace<puyo::TranslateAnimation>(e, dx * TILE_SIZE, dy * TILE_SIZE, frames);
+        }
+    };
+    static auto setRotate = [&](entt::entity e, int srcDx, int srcDy, int dstDx, int dstDy, int frames) {
+        if (_reg.has<puyo::RotateAnimation>(e)) {
+            auto& anim = _reg.get<puyo::RotateAnimation>(e);
+            // Retain source delta
+            anim.dstDx = dstDx * TILE_SIZE;
+            anim.dstDy = dstDy * TILE_SIZE;
+            anim.frames = frames;
+        }
+        else {
+            _reg.emplace<puyo::RotateAnimation>(e,
+                srcDx * TILE_SIZE, srcDy * TILE_SIZE, // Source delta
+                dstDx * TILE_SIZE, dstDy * TILE_SIZE, // Destination delta
+                frames);
+        }
+    };
 
     auto view = _reg.view<puyo::Parent, puyo::GridIndex, puyo::RenderPosition, puyo::ControlAxis>();
     for (auto& e : view) {
@@ -299,6 +326,9 @@ void Game::control() {
         auto& slaveIndex = _reg.get<puyo::GridIndex>(slave);
         auto& slaveRenderPosition = _reg.get<puyo::RenderPosition>(slave);
 
+        if (!axis.locked)
+            std::cout << "-- (" << index.x << ", " << index.y << ") drop: " << index.drop << " = px:(" << renderPosition.x << ", " << renderPosition.y << ")" << std::endl;
+
         // Get input and board from player
         if (!_reg.has<player::Input>(parent) || !_reg.has<player::Board>(parent)) {
             continue;
@@ -307,31 +337,30 @@ void Game::control() {
         auto& board = _reg.get<player::Board>(parent);
 
         // Accumulate move input triggers
+        const int halfTile = TILE_SIZE / 2;
         int8_t dx = 0;
-        if (input.keys[player::InputKey::Left].trigger) dx--;
-        if (input.keys[player::InputKey::Right].trigger) dx++;
-
         int8_t dr = 0;
-        if (input.keys[player::InputKey::RotateLeft].counter == 0) dr--; // no button repeat, only first press
-        if (input.keys[player::InputKey::RotateRight].counter == 0) dr++; // no button repeat, only first press
+        int dropSpeed = _settings.dropSpeed;
+        bool softDrop = false;
+        if (!axis.locked) {
+            if (input.keys[player::InputKey::Left].trigger) dx--;
+            if (input.keys[player::InputKey::Right].trigger) dx++;
 
-        float dy = 0;
-        if (input.keys[player::InputKey::Down].trigger) dy += PUYO_MOVE_Y_STEP;
+            if (input.keys[player::InputKey::RotateLeft].counter == 0) dr--; // no button repeat, only first press
+            if (input.keys[player::InputKey::RotateRight].counter == 0) dr++; // no button repeat, only first press
 
-        //if cleanup: (end of game->won ?)
-        //    cleanup slave(remove this)
-        //    cleanup block(remove this)
-        //    return
+            if (dr) std::cout << "dr: " << int(dr) << std::endl;
 
-        /*TEMP*/ bool locked = false; // once the player should not have control over it
-
+            softDrop = input.keys[player::InputKey::Down].counter >= 0; // no repeat, computed on every frame
+            if (_settings.softDropSpeed > _settings.dropSpeed && softDrop) {
+                dropSpeed = _settings.softDropSpeed;
+            }
+        }
 
         // --- Lateral movement ---
 
         // Don't allow movement if already moving
-        bool shifting = _reg.has<puyo::TranslateAnimation>(e) || _reg.has<puyo::TranslateAnimation>(slave);
-
-        if (!shifting && !locked && dx != 0) {
+        if (!axis.shift && dx != 0) {
 
             // Check if destination is blocked our out of bounds
             bool blocked = isBlocked(board, { index.x + dx, index.y })
@@ -340,8 +369,9 @@ void Game::control() {
             // Acknowledge movement
             if (!blocked) {
                 // Make smooth animations
-                _reg.emplace<puyo::TranslateAnimation>(e, dx * TILE_SIZE, 0, LATERAL_SHIFT_FRAMES);
-                _reg.emplace<puyo::TranslateAnimation>(slave, dx * TILE_SIZE, 0, LATERAL_SHIFT_FRAMES);
+                setMove(e, dx, 0, LATERAL_SHIFT_FRAMES);
+                setMove(slave, dx, 0, LATERAL_SHIFT_FRAMES);
+                axis.shift = true;
 
                 // Update pair coordinates
                 index.x += dx;
@@ -350,11 +380,13 @@ void Game::control() {
                 // Play sound effect
                 Mix_PlayMusic(_sound.move.get(), 0);
             }
+        } else {
+            axis.shift = false;
         }
 
         // --- Rotation ---
 
-        if (!shifting && !locked && dr != 0) {
+        if (dr != 0) {
 
             bool rotable = true;
             auto dst = puyo::GridIndex{
@@ -378,7 +410,7 @@ void Game::control() {
 
                 // Ghost row limitation: don't allow rotation to upright rotation on ghost rows when blocked (so we can't push up)
                 if (dst.y < GHOST_ROWS && dst.x == index.x) {
-                    std::cout << "ghost line pushup disalowed" << std::endl;
+                    std::cout << "ghost line pushup disallowed" << std::endl;
                     rotable = false;
                 }
 
@@ -410,26 +442,12 @@ void Game::control() {
                 // Reset rotation counter
                 axis.rotationCounter = 0;
 
-                // Make smooth animations
+                // Make smooth animations : Can update previous animations if any
                 if (push.x != 0 || push.y != 0) {
-                    _reg.emplace<puyo::TranslateAnimation>(e, push.x * TILE_SIZE, push.y * TILE_SIZE, LATERAL_SHIFT_FRAMES);
-                    _reg.emplace<puyo::TranslateAnimation>(slave, push.x * TILE_SIZE, push.y * TILE_SIZE, LATERAL_SHIFT_FRAMES);
+                    setMove(e, push.x, push.y, LATERAL_SHIFT_FRAMES);
+                    setMove(slave, push.x, push.y, LATERAL_SHIFT_FRAMES);
                 }
-
-                // Can replace previous rotation animation if any
-                if (_reg.has<puyo::RotateAnimation>(slave)) {
-                    auto& anim = _reg.get<puyo::RotateAnimation>(slave);
-                    // Retain source delta
-                    anim.dstDx = (dst.x - index.x) * TILE_SIZE;
-                    anim.dstDy = (dst.y - index.y) * TILE_SIZE;
-                    anim.frames = ROTATION_FRAMES;
-                }
-                else {
-                    _reg.emplace<puyo::RotateAnimation>(slave,
-                        (slaveIndex.x - index.x) * TILE_SIZE, (slaveIndex.y - index.y) * TILE_SIZE, // Source delta
-                        (dst.x - index.x) * TILE_SIZE, (dst.y - index.y) * TILE_SIZE, // Destination delta
-                        ROTATION_FRAMES);
-                }
+                setRotate(slave, slaveIndex.x - index.x, slaveIndex.y - index.y, dst.x - index.x, dst.y - index.y, ROTATION_FRAMES);
 
                 // Update pair coordinates
                 index.x += push.x;
@@ -437,14 +455,81 @@ void Game::control() {
                 slaveIndex.x = dst.x + push.x;
                 slaveIndex.y = dst.y + push.y;
 
+                // upward push sets just above midline height
+                if (push.y < 0) {
+                    std::cout << "Pushing y" << push.y << ", drop " << index.drop << " -> 15" << std::endl;
+                    axis.pushupCounter++;
+                    renderPosition.y -= index.drop;
+                    slaveRenderPosition.y -= slaveIndex.drop;                    
+                    index.drop = slaveIndex.drop = halfTile - 1;
+                    renderPosition.y += index.drop;
+                    slaveRenderPosition.y += slaveIndex.drop;
+                }
+
                 // Play sound effect
                 Mix_PlayMusic(_sound.rotate.get(), 0);
             }
         }
 
         // --- Soft Drop ---
+        // Only check axis, slave is synced        
+        bool wasAbove = (index.drop < halfTile);
 
-        // pair fall and lock
+        // limit drop to end of tile, 
+        // so softdrop can only place at mid or top states
+        if (index.drop + dropSpeed > TILE_SIZE) dropSpeed = TILE_SIZE - index.drop;
+
+        // Applying drop speed
+        index.drop += dropSpeed;
+        slaveIndex.drop += dropSpeed;
+        renderPosition.y += dropSpeed;
+        slaveRenderPosition.y += dropSpeed;
+
+        if (!axis.locked) {
+            // Check if cell below  is blocked our out of bounds
+            bool blocked = isBlocked(board, { index.x, index.y + 1 })
+                || isBlocked(board, { slaveIndex.x, slaveIndex.y + 1 });
+
+            // Going on to the next cell
+            if (!blocked && index.drop == TILE_SIZE) {
+                index.drop = slaveIndex.drop = 0;
+                index.y++, slaveIndex.y++;
+            }
+
+            // Start bounce
+            if (blocked && index.drop >= halfTile) {
+                // Play bouncing animation
+                // Play placement sound effect 
+            }
+
+            // Grace period at the bottom
+            if (blocked && index.drop == TILE_SIZE) {
+                std::cout << "Grace: " << int(axis.graceCounter) << std::endl;
+                axis.graceCounter++;
+                if (softDrop) { // skip grace period when soft dropping
+                    axis.graceCounter = _settings.gracePeriod;
+                }
+            }
+
+            // Grace period override
+            if (blocked && axis.pushupCounter >= _settings.maxPushups) {
+                std::cout << "Max pushups, Locking!" << std::endl;
+                axis.locked = true;
+            }
+
+            // Lock the pair at end of grace period
+            if (blocked && index.drop == TILE_SIZE && axis.graceCounter >= _settings.gracePeriod) {
+                std::cout << "Locked!" << std::endl;
+                axis.locked = true;
+            }
+        }
+
+        // Wait for any rotation animations to stop
+        if (_reg.has<puyo::RotateAnimation>(slave)) {
+            // wait
+            std::cout << "anim playing" << std::endl;
+        }
+
     }
 
 }

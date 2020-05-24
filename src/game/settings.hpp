@@ -12,12 +12,13 @@ static const char* ASSET_PATH_TEXTURE = "src/assets/puyos.png";
 static const char* ASSET_PATH_SOUND_MOVE = "src/assets/sound/move.ogg";
 static const char* ASSET_PATH_SOUND_ROTATE = "src/assets/sound/rotate.ogg";
 
-const int LATERAL_SHIFT_FRAMES = 2;
-const int ROTATION_FRAMES = 7;
-
 const int SPAWN_COUNT = 2;
 const int GHOST_ROWS = 2;
-const float PUYO_MOVE_Y_STEP = 0.5f;
+const int LATERAL_SHIFT_FRAMES = 2;
+const int ROTATION_FRAMES = 7;
+const int LOCKING_FRAMES = 8;
+const int BLINKING_FRAMES = 10;
+const int BOUNCING_FRAMES = 16;
 
 // -- Game Settings --
 
@@ -35,6 +36,11 @@ struct Settings {
         { 3, 1 }, // main spawn
         { 3, 0 },
     };
+
+    int dropSpeed = TILE_SIZE / 16;     // 16 frames needed to cross a cell
+    int softDropSpeed = TILE_SIZE / 2;  // 2 frames needed to cross a cell when pushing down
+    int gracePeriod = 32;               // frames the player can still move the puyo after hitting a floor
+    int maxPushups = 8;                 // maximal number of pushing up caused by rotations
 
     // Input controller interfaces
     std::vector< std::vector<SDL_Scancode> > controllers = {
