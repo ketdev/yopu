@@ -1,7 +1,7 @@
 #pragma once
+#include <random>
 #include "../entity.h"
 #include "../puyo/puyo.h"
-#include <random>
 
 namespace player {
 
@@ -28,7 +28,7 @@ namespace player {
 
         // Shared puyo pool
         std::shared_ptr<std::mt19937> randgen;
-        std::shared_ptr<std::vector<puyo::Type>> pool;
+        std::shared_ptr<std::vector<puyo::Color>> pool;
 
         // The index of the shared spawn pool
         uint32_t poolIndex = {};

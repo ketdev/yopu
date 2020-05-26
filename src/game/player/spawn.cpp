@@ -7,17 +7,17 @@
 //      spawnPool: a shared spawn pool used for all players
 //      index: puyo sequence index
 //      colorCount: Number of playable colors (3-5)
-static puyo::Type nextPuyo(player::Spawner& spawner) {
+static puyo::Color nextPuyo(player::Spawner& spawner) {
     // Create more in pool if needed
     while (spawner.poolIndex >= spawner.pool->size()) {
         // Get random puyo color
-        auto type = static_cast<puyo::Type>((*spawner.randgen)() % spawner.colorCount);
+        auto type = static_cast<puyo::Color>((*spawner.randgen)() % spawner.colorCount);
         spawner.pool->push_back(type);
     }
     return (*spawner.pool)[spawner.poolIndex];
 }
 
-static entity makePuyo(registry& reg, puyo::Type type, entity player, puyo::GridIndex pos) {
+static entity makePuyo(registry& reg, puyo::Color type, entity player, puyo::GridIndex pos) {
     auto puyo = reg.create();
     reg.emplace<puyo::Parent>(puyo, player);       // Associated player entity
     reg.emplace<puyo::Color>(puyo, type);

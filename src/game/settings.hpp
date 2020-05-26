@@ -9,9 +9,6 @@
 
 const int TILE_SIZE = 32;
 static const char* ASSET_PATH_TEXTURE = "src/assets/puyos.png";
-static const char* ASSET_PATH_SOUND_MOVE = "src/assets/sound/move.ogg";
-static const char* ASSET_PATH_SOUND_ROTATE = "src/assets/sound/rotate.ogg";
-static const char* ASSET_PATH_SOUND_DROP = "src/assets/sound/drop.ogg";
 
 const int LATERAL_SHIFT_FRAMES = 2;
 const int ROTATION_FRAMES = 7;
@@ -26,12 +23,10 @@ struct Settings {
     // Number of playable colors (3-5)
     int colorCount = 5;
 
-    //--
+    // 16 frames needed to cross a cell
+    int dropSpeed = TILE_SIZE / 16;     
 
-    int dropSpeed = TILE_SIZE / 16;     // 16 frames needed to cross a cell
-    int softDropSpeed = TILE_SIZE / 2;  // 2 frames needed to cross a cell when pushing down
-    int gracePeriod = 32;               // frames the player can still move the puyo after hitting a floor
-    int maxPushups = 8;                 // maximal number of pushing up caused by rotations
+    //--
 
     // Input controller interfaces
     std::vector< std::vector<SDL_Scancode> > controllers = {
@@ -54,5 +49,4 @@ struct Settings {
         Rensa Sibari	        - Ranges from "Off" (0) to "Limit 9" (8), default: 0 (causes chains with fewer than a set number of steps to score nothing and to send no garbage)
         VS Com. Level	        - Easy (0) / Normal (1) / Hard (2) / Hardest (3), default: 1
     */
-    
 };

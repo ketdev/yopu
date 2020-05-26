@@ -8,6 +8,7 @@
 #include "player.hpp"
 #include "puyo.hpp"
 
+
 class Game : public IGame {
 public:
     Game() {}
@@ -23,15 +24,9 @@ private: // shared memory
 
 private: // resources
     SDL::Texture _tex;
-    struct {
-        SDL::MixMusic move;
-        SDL::MixMusic rotate;
-        SDL::MixMusic drop;
-    } _sound;
 
 private: // factories
     entt::entity makePlayer(int index);
-    entt::entity makePuyo(entt::entity parent, puyo::Type type, uint8_t x, uint8_t y);
 
 private:  // render systems
     void applyTranslationAnimation();
@@ -43,7 +38,6 @@ private:  // render systems
 private:  // update systems
     void updateInput();
 
-    void control();
     void freefall();
 
 };
