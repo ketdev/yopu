@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <vector>
 #include <entt\entt.hpp>
+#include <SDL2\SDL_rect.h>
 
 namespace puyo {
 
@@ -21,7 +22,7 @@ namespace puyo {
     };
 
 
-    // -- Components --
+    // -- Update Components --
 
     struct Parent {
         entt::entity entity;
@@ -34,16 +35,22 @@ namespace puyo {
         int drop = 0;
     };
     struct ControlAxis {
-        bool shift = false;              // if already performing a lateral move
-        uint8_t rotationCounter = 0;     // for double tap
-        uint8_t graceCounter = 0;
-        uint8_t pushupCounter = 0;      // prevent upward push 8 times
-
         bool locked = false;            // once the player should not have control over it
-
+        bool shift = false;             // if already performing a lateral move
+        uint8_t rotationCounter = 0;    // for double tap
+        uint8_t graceCounter = 0;       // frames before locking after pair is blocked
+        uint8_t pushupCounter = 0;      // limit the number of upward pushes
 
         entt::entity slave; // can have one slave only
     };
+
+    // -- Render Components --
+
+    struct Sprite {
+        //SDL::Texture& texure;
+        SDL_Rect dst, src;
+    };
+
 
     struct RenderPosition {
         int x, y;
@@ -57,8 +64,12 @@ namespace puyo {
         int dstDx, dstDy;
         int frames;
     };
+
     struct BlinkingAnimation {
-        uint8_t counter = 0;            // blinking animation
+        uint8_t counter = 0;
+    };
+    struct BounceAnimation {
+        uint8_t counter = 0;
     };
 
     // ------------------------

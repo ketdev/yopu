@@ -11,9 +11,8 @@ const int TILE_SIZE = 32;
 static const char* ASSET_PATH_TEXTURE = "src/assets/puyos.png";
 static const char* ASSET_PATH_SOUND_MOVE = "src/assets/sound/move.ogg";
 static const char* ASSET_PATH_SOUND_ROTATE = "src/assets/sound/rotate.ogg";
+static const char* ASSET_PATH_SOUND_DROP = "src/assets/sound/drop.ogg";
 
-const int SPAWN_COUNT = 2;
-const int GHOST_ROWS = 2;
 const int LATERAL_SHIFT_FRAMES = 2;
 const int ROTATION_FRAMES = 7;
 const int LOCKING_FRAMES = 8;
@@ -24,18 +23,10 @@ const int BOUNCING_FRAMES = 16;
 
 struct Settings {
 
-    // 6x12 + hidden rows
-    int boardRows = 12 + GHOST_ROWS;
-    int boardColumns = 6;
-
     // Number of playable colors (3-5)
     int colorCount = 5;
 
-    // Puyo spawn locations, first being axis
-    puyo::GridIndex spawner[SPAWN_COUNT] = {
-        { 3, 1 }, // main spawn
-        { 3, 0 },
-    };
+    //--
 
     int dropSpeed = TILE_SIZE / 16;     // 16 frames needed to cross a cell
     int softDropSpeed = TILE_SIZE / 2;  // 2 frames needed to cross a cell when pushing down

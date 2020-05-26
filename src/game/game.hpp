@@ -1,6 +1,5 @@
 #pragma once
 #include <entt/entt.hpp>
-#include <random>
 #include <SDL2/SDL_scancode.h>
 
 #include "../engine/igame.hpp"
@@ -18,8 +17,7 @@ public:
     virtual bool logic();
     virtual void render(SDL::Renderer& renderer, int frame);
 
-private:  // shared memory
-    std::mt19937 _rand;
+private: // shared memory
     Settings _settings;
     entt::registry _reg;
 
@@ -28,19 +26,24 @@ private: // resources
     struct {
         SDL::MixMusic move;
         SDL::MixMusic rotate;
+        SDL::MixMusic drop;
     } _sound;
 
 private: // factories
     entt::entity makePlayer(int index);
     entt::entity makePuyo(entt::entity parent, puyo::Type type, uint8_t x, uint8_t y);
 
-private:  // systems
+private:  // render systems
     void applyTranslationAnimation();
     void applyRotationAnimation();
     void drawPuyos(SDL::Renderer& renderer);
+
+    void renderSprite(SDL::Renderer& renderer);
+
+private:  // update systems
     void updateInput();
-    void spawn();
+
     void control();
-    // void freefall();
+    void freefall();
 
 };

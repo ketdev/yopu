@@ -7,20 +7,16 @@
 #include <glm/vec3.hpp>
 #include <cmath>
 
-// -- Typedefs --
-
-static const entt::entity noentity = {};
+#include "entity.h"
 
 // -- Game Implementation --
 
 void Game::init(SDL::Renderer& renderer) {
-    // seeding a pseudo random number generator with a random source
-    _rand.seed(std::random_device{}());
-
     // Load resources
     _tex = Loader::loadTexture(renderer, ASSET_PATH_TEXTURE);
     _sound.move = Loader::loadMusic(ASSET_PATH_SOUND_MOVE);
     _sound.rotate = Loader::loadMusic(ASSET_PATH_SOUND_ROTATE);
+    _sound.drop = Loader::loadMusic(ASSET_PATH_SOUND_DROP);
 
     // Create player entities
     makePlayer(0);
@@ -38,44 +34,43 @@ void Game::input(SDL_Scancode sc, bool isDown) {
     }
 }
 bool Game::logic() {
+    std::cout << "-- Logic --------------------------------------------" << std::endl;
     updateInput();
-    spawn();
-    control();
-    // freefall();
 
-    // std::cout << "Hi!" << std::endl;
+    player::spawn(_reg);
+
+    control();
+    freefall();
     return true;
 }
 void Game::render(SDL::Renderer& renderer, int frame) {
-    //std::cout << "Frame: " << frame << std::endl;
+    std::cout << "-- Render: (" << frame << ")" << std::endl;
     
     applyTranslationAnimation();
     applyRotationAnimation();
     drawPuyos(renderer);
 }
 
+
 // -- Factories --
 
 entt::entity Game::makePlayer(int index) {
+    // Shared puyo pool
+    static std::shared_ptr<std::vector<puyo::Type>> pool(new std::vector<puyo::Type>);
+    static std::shared_ptr<std::mt19937> randgen(new std::mt19937(std::random_device{}()));
+
     auto player = _reg.create();
     _reg.emplace<player::Input>(player, index);     // Control input
-    _reg.emplace<player::Board>(player, _settings.boardRows, _settings.boardColumns); // Game board
+    _reg.emplace<player::Board>(player);            // Game board
+    auto& spawner = _reg.emplace_or_replace<player::Spawner>(player);
+    spawner.randgen = randgen;
+    spawner.pool = pool;
+    spawner.colorCount = _settings.colorCount;
     _reg.emplace<player::Idle>(player);             // Initial game status
     return player;
 }
 
-entt::entity Game::makePuyo(entt::entity parent, puyo::Type type, uint8_t x, uint8_t y) {
-    auto puyo = _reg.create();
-    _reg.emplace<puyo::Parent>(puyo, parent);       // Associated player entity
-    _reg.emplace<puyo::Color>(puyo, type);
-    _reg.emplace<puyo::GridIndex>(puyo, x, y, 0);
-
-    // TODO: render position based on board, shift, etc...
-    _reg.emplace<puyo::RenderPosition>(puyo, x * TILE_SIZE, y * TILE_SIZE);
-    return puyo;
-}
-
-// -- Systems --
+// -- Render Systems --
 
 void Game::applyTranslationAnimation() {
     // Apply translation animation    
@@ -205,6 +200,16 @@ void Game::drawPuyos(SDL::Renderer& renderer) {
 
 }
 
+void Game::renderSprite(SDL::Renderer& renderer) {
+    auto view = _reg.view<puyo::Sprite>();
+    for (auto& e : view) {
+        auto& sprite = view.get<puyo::Sprite>(e);
+        SDL_RenderCopy(renderer.get(), _tex.get(), &sprite.src, &sprite.dst);
+    }
+}
+
+// -- Update Systems --
+
 void Game::updateInput() {
     auto view = _reg.view<player::Input>();
     for (auto& e : view) {
@@ -230,63 +235,14 @@ void Game::updateInput() {
                 
             // Update for next frame
             input.keys[i].curr = input.keys[i].next;
-        }        
-    }
-}
-
-void Game::spawn() {
-    // Our spawn system stores a shared spawn pool used for all players
-    static std::vector<puyo::Type> spawnPool;
-    static auto nextSpawn = [&](uint32_t index) -> puyo::Type {
-        // Create more in pool if needed
-        while (index >= spawnPool.size()) {
-            // Get random puyo color
-            auto type = static_cast<puyo::Type>(_rand() % _settings.colorCount);
-            spawnPool.push_back(type);
-            std::cout << "Spawn Index: " << index
-                << " Type: " << static_cast<int>(type) << std::endl;
         }
-        return spawnPool[index];
-    };
-
-    auto view = _reg.view<player::Board, player::Idle>();
-    for (auto& e : view) {
-        auto& board = view.get<player::Board>(e);
-
-        entt::entity axis = noentity;
-        for (auto pos : _settings.spawner) {
-
-            // Game Over if one spawner cell is not empty
-            if (noentity != board.grid[pos.y][pos.x]) {
-                _reg.emplace<player::GameOver>(e);
-                return;
-            }
-
-            // Create puyo on spawner
-            auto type = nextSpawn(board.spawnPoolIndex++);
-            auto puyo = makePuyo(e, type, pos.x, pos.y);
-
-            // Set first spawned puyo as controlled
-            if (axis == noentity) {
-                _reg.emplace<puyo::ControlAxis>(puyo);
-                _reg.emplace<puyo::BlinkingAnimation>(puyo);
-                axis = puyo;
-            }
-            // Set slave parent to axis and axis slave to puyo
-            else {                
-                _reg.get<puyo::Parent>(puyo).entity = axis;
-                _reg.get<puyo::ControlAxis>(axis).slave = puyo;
-            }
-        }
-
-        _reg.remove<player::Idle>(e);
     }
 }
 
 void Game::control() {
     static auto isBlocked = [&](player::Board board, puyo::GridIndex pos) -> bool {
-        return (pos.x >= _settings.boardColumns) || (pos.x < 0)
-            || (pos.y >= _settings.boardRows) || (pos.y < 0)
+        return (pos.x >= player::Board::columns) || (pos.x < 0)
+            || (pos.y >= player::Board::rows) || (pos.y < 0)
             || (noentity != board.grid[pos.y][pos.x]);
     };
     static auto setMove = [&](entt::entity e, int dx, int dy, int frames) {
@@ -349,8 +305,6 @@ void Game::control() {
             if (input.keys[player::InputKey::RotateLeft].counter == 0) dr--; // no button repeat, only first press
             if (input.keys[player::InputKey::RotateRight].counter == 0) dr++; // no button repeat, only first press
 
-            if (dr) std::cout << "dr: " << int(dr) << std::endl;
-
             softDrop = input.keys[player::InputKey::Down].counter >= 0; // no repeat, computed on every frame
             if (_settings.softDropSpeed > _settings.dropSpeed && softDrop) {
                 dropSpeed = _settings.softDropSpeed;
@@ -409,7 +363,7 @@ void Game::control() {
                 };
 
                 // Ghost row limitation: don't allow rotation to upright rotation on ghost rows when blocked (so we can't push up)
-                if (dst.y < GHOST_ROWS && dst.x == index.x) {
+                if (dst.y < player::Board::ghostRows && dst.x == index.x) {
                     std::cout << "ghost line pushup disallowed" << std::endl;
                     rotable = false;
                 }
@@ -497,9 +451,14 @@ void Game::control() {
             }
 
             // Start bounce
-            if (blocked && index.drop >= halfTile) {
+            if (blocked && index.drop >= halfTile && !_reg.has<puyo::BounceAnimation>(e)) {
                 // Play bouncing animation
+                // TODO: bounce only if have something under
+                _reg.emplace<puyo::BounceAnimation>(e);
+                _reg.emplace<puyo::BounceAnimation>(slave);
+
                 // Play placement sound effect 
+                Mix_PlayMusic(_sound.drop.get(), 0);
             }
 
             // Grace period at the bottom
@@ -524,12 +483,34 @@ void Game::control() {
             }
         }
 
-        // Wait for any rotation animations to stop
+        // ------
+
+        // Wait for any rotation animations to finish
         if (_reg.has<puyo::RotateAnimation>(slave)) {
             // wait
             std::cout << "anim playing" << std::endl;
         }
 
     }
+
+}
+
+void Game::freefall() {
+
+    /*
+    For the main puyo:
+
+        initialization updates on-screen coordinates and blocked status under both puyos to check which one should free-fall;
+        initializes free-fall parameters if the main puyo shall fall;
+        yields execution.
+        If the main puyo should not free-fall, the callback skips to the placement phase and yields execution.
+
+    For the slave puyo:
+
+        initialization updates on-screen coordinates;
+        splits pair by overwriting the link to the main puyo as a parent object: the new parent object is the relevant player status object;
+        yields execution.
+    
+    */
 
 }
