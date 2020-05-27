@@ -16,12 +16,9 @@ namespace player {
     // -- Components --
 
     struct Spawner {
-        // Puyo spawn locations, first being axis
-        static constexpr int count = 2;
-        static constexpr puyo::GridIndex location[count] = {
-            { 3, 1 }, // main spawn
-            { 3, 0 },
-        };
+        // Puyo spawn locations
+        static constexpr puyo::GridIndex mainSpawn = { 3, 1 };
+        static constexpr puyo::GridIndex slaveSpawn = { 3, 0 };
 
         // Number of playable colors (3-5)
         int colorCount = 5;
@@ -30,7 +27,7 @@ namespace player {
         std::shared_ptr<std::mt19937> randgen;
         std::shared_ptr<std::vector<puyo::Color>> pool;
 
-        // The index of the shared spawn pool
+        // A running index in the shared spawn pool
         uint32_t poolIndex = {};
     };
 
@@ -42,6 +39,7 @@ namespace player {
     //  Adds Animation: Blinking
     void spawn(registry& reg);
 
+    // TODO: optimization, shared pool struct with all subscribers, remove already processed index, save memory
     // TODO: spawn garbage puyos as well
 }
 

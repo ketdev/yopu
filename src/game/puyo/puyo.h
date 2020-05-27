@@ -1,7 +1,13 @@
 #pragma once
 #include "../entity.h"
 
+/*TEMP*/ #include "../puyo.hpp"
+
 namespace puyo {
+
+    // Number of smaller units within a grid cells, 
+    // independent of rendering proportions
+    static constexpr int DROP_RES = 0x200000;
 
     // -- Components --
 
@@ -20,11 +26,11 @@ namespace puyo {
 
     struct GridIndex {
         int x, y;
-        int drop = 0;
+        int drop = 0; // up to DROP_RES
     };
 
     struct Parent {
-        entity entity;
+        entity player;  // Associated Player entity
     };
 
 }

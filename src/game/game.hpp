@@ -5,7 +5,6 @@
 #include "../engine/igame.hpp"
 #include "../engine/loader.hpp"
 #include "settings.hpp"
-#include "player.hpp"
 #include "puyo.hpp"
 
 
@@ -34,10 +33,4 @@ private:  // render systems
     void drawPuyos(SDL::Renderer& renderer);
 
     void renderSprite(SDL::Renderer& renderer);
-
-private:  // update systems
-    void updateInput();
-
-    void freefall();
-
 };

@@ -4,10 +4,9 @@
 #include <entt\entt.hpp>
 #include <SDL2\SDL_rect.h>
 
-#include "puyo\puyo.h"
-#include "puyo\control.h"
-
 namespace puyo {
+
+    const int TILE_SIZE = 32;
 
 
     // -- Render Components --
@@ -32,17 +31,12 @@ namespace puyo {
     };
 
     struct BlinkingAnimation {
+        // 10 on, 10 off, repeat
         uint8_t counter = 0;
     };
     struct BounceAnimation {
+        // Bounce: down - mid - up - mid - down - mid - up - mid (16 frames total?, 2 each)
         uint8_t counter = 0;
     };
-
-    // ------------------------
-
-    struct Acceleration {
-        float acc;
-    };
-
 
 }  // namespace puyo

@@ -10,8 +10,14 @@
 #include "entity.h"
 
 // Get our systems
+#include "player\board.h"
 #include "player\spawner.h"
+#include "player\input.h"
+
+#include "puyo\puyo.h"
 #include "puyo\control.h"
+#include "puyo\freefall.h"
+
 #include "media\sound.h"
 
 // -- Game Implementation --
@@ -24,32 +30,33 @@ void Game::init(SDL::Renderer& renderer) {
     makePlayer(0);
 }
 void Game::input(SDL_Scancode sc, bool isDown) {
+    // Forward input events to our input components
     auto view = _reg.view<player::Input>();
     for (auto& player : view) {
         auto& input = view.get<player::Input>(player);
         auto& controller = _settings.controllers[input.controllerIndex];
         for (size_t i = 0; i < player::InputKey::_Count; i++) {
             if (sc == controller[i]) {
-                input.keys[i].next = isDown;
+                input.keys[i].isDown = isDown;
             }
         }
     }
 }
 bool Game::logic() {
-    std::cout << "-- Logic --------------------------------------------" << std::endl;
-    updateInput();
+    /*TEMP*/ //std::cout << "-- Logic --------------------------------------------" << std::endl;
 
     // Run system logic
+    player::updateInput(_reg);
     player::spawn(_reg);
     puyo::control(_reg);
+    puyo::freefall(_reg);
 
-    freefall();
     return true;
 }
 void Game::render(SDL::Renderer& renderer, int frame) {
     media::soundPlayer(_reg);
 
-    std::cout << "-- Render: (" << frame << ")" << std::endl;
+    /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
     
     applyTranslationAnimation();
     applyRotationAnimation();
@@ -198,7 +205,7 @@ void Game::drawPuyos(SDL::Renderer& renderer) {
             break;
         }
 
-        SDL_Rect src{ ix * TILE_SIZE, iy * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+        SDL_Rect src{ ix * puyo::TILE_SIZE, iy * puyo::TILE_SIZE, puyo::TILE_SIZE, puyo::TILE_SIZE };
         SDL_Rect dst{ pos.x, pos.y, src.w, src.h };
         SDL_RenderCopy(renderer.get(), _tex.get(), &src, &dst);
     }
@@ -211,56 +218,4 @@ void Game::renderSprite(SDL::Renderer& renderer) {
         auto& sprite = view.get<puyo::Sprite>(e);
         SDL_RenderCopy(renderer.get(), _tex.get(), &sprite.src, &sprite.dst);
     }
-}
-
-// -- Update Systems --
-
-void Game::updateInput() {
-    auto view = _reg.view<player::Input>();
-    for (auto& e : view) {
-        auto& input = view.get<player::Input>(e);
-        for (size_t i = 0; i < player::InputKey::_Count; i++) {
-            
-            if (input.keys[i].next) {
-                input.keys[i].counter++;
-            }
-            else {
-                input.keys[i].counter = -1;
-            }
-
-            // Calculate triggers
-            input.keys[i].trigger =
-                // initial press
-                (input.keys[i].counter == 0) 
-                // first repeat
-                || (input.keys[i].counter == _settings.buttonRepeatDelay) 
-                // subsequent repeats
-                || (input.keys[i].counter > _settings.buttonRepeatDelay
-                    && ((input.keys[i].counter - _settings.buttonRepeatDelay) % _settings.buttonSubsequentDelay) == 0);
-                
-            // Update for next frame
-            input.keys[i].curr = input.keys[i].next;
-        }
-    }
-}
-
-
-void Game::freefall() {
-
-    /*
-    For the main puyo:
-
-        initialization updates on-screen coordinates and blocked status under both puyos to check which one should free-fall;
-        initializes free-fall parameters if the main puyo shall fall;
-        yields execution.
-        If the main puyo should not free-fall, the callback skips to the placement phase and yields execution.
-
-    For the slave puyo:
-
-        initialization updates on-screen coordinates;
-        splits pair by overwriting the link to the main puyo as a parent object: the new parent object is the relevant player status object;
-        yields execution.
-    
-    */
-
 }

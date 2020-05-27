@@ -2,16 +2,12 @@
 #include <vector>
 #include <SDL2/SDL_scancode.h>
 #include <glm/vec2.hpp>
-#include "player.hpp"
-#include "puyo.hpp"
+#include "puyo/puyo.h"
 
 // -- Constants --
 
-const int TILE_SIZE = 32;
 static const char* ASSET_PATH_TEXTURE = "src/assets/puyos.png";
 
-const int LATERAL_SHIFT_FRAMES = 2;
-const int ROTATION_FRAMES = 7;
 const int LOCKING_FRAMES = 8;
 const int BLINKING_FRAMES = 10;
 const int BOUNCING_FRAMES = 16;
@@ -24,7 +20,7 @@ struct Settings {
     int colorCount = 5;
 
     // 16 frames needed to cross a cell
-    int dropSpeed = TILE_SIZE / 16;     
+    int dropSpeed = puyo::DROP_RES / 16;
 
     //--
 
@@ -32,8 +28,6 @@ struct Settings {
     std::vector< std::vector<SDL_Scancode> > controllers = {
         { SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_UP, SDL_SCANCODE_DOWN, SDL_SCANCODE_Z, SDL_SCANCODE_X }
     };
-    int buttonRepeatDelay = 8;
-    int buttonSubsequentDelay = 2;
 
     /*
     RE:
