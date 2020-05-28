@@ -1,7 +1,6 @@
 
 Player states:
     - ...
-    - (Puyo) Control (wait until locked)
     - (Board) Resolve chains (wait until idle)
         - Freefall
         - Pop groups
@@ -13,19 +12,6 @@ Player states:
 
 Systems:
     - ...
-    - [FREEFALL] on Falling Puyo:
-        Gravity initialization
-            * Pair split takes 2 frames to complete if the main puyo should free-fall,
-            * or 3 frames if it is the slave puyo. Technically, from the frame the pair
-            * is detected as being blocked, a single frame passes without anything happening,
-            * then the main puyo may begin its fall on the second frame after the blocking
-            * event. The slave puyo may not begin its fall before the third frame.
-        Freefall
-        * When the gravity routine detects that the puyo has reached the floor, execution
-        yields once again, calling the placement routine on the very next frame after
-        free-fall. Both callbacks mark their respective object for cleanup and call the routine
-        which will place the puyo on the virtual board representation in RAM.
-
         + Board settled event
 
     - [POP] on Settled Board

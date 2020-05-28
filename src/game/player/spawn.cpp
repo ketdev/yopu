@@ -43,7 +43,7 @@ void player::spawn(registry& reg) {
         auto& spawner = view.get<player::Spawner>(player);
         
         // Game Over if one spawner cell is not empty
-        if (isBlocked(board, spawner.mainSpawn) || isBlocked(board, spawner.slaveSpawn)) {
+        if (board.isBlocked(spawner.mainSpawn) || board.isBlocked(spawner.slaveSpawn)) {
             reg.emplace<player::GameOver>(player);
             return;
         }

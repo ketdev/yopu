@@ -13,6 +13,7 @@
 #include "player\board.h"
 #include "player\spawner.h"
 #include "player\input.h"
+#include "player\chain.h"
 
 #include "puyo\puyo.h"
 #include "puyo\control.h"
@@ -45,19 +46,19 @@ void Game::input(SDL_Scancode sc, bool isDown) {
 bool Game::logic() {
     /*TEMP*/ //std::cout << "-- Logic --------------------------------------------" << std::endl;
 
-    // Run system logic
     player::updateInput(_reg);
     player::spawn(_reg);
     puyo::control(_reg);
     puyo::freefall(_reg);
-
+    player::resolve(_reg);
+    
     return true;
 }
 void Game::render(SDL::Renderer& renderer, int frame) {
+    /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
+
     media::soundPlayer(_reg);
 
-    /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
-    
     applyTranslationAnimation();
     applyRotationAnimation();
     drawPuyos(renderer);
@@ -74,6 +75,7 @@ entt::entity Game::makePlayer(int index) {
     auto player = _reg.create();
     _reg.emplace<player::Input>(player, index);     // Control input
     _reg.emplace<player::Board>(player);            // Game board
+    _reg.emplace<player::Score>(player);            // Score
     auto& spawner = _reg.emplace_or_replace<player::Spawner>(player);
     spawner.randgen = randgen;
     spawner.pool = pool;

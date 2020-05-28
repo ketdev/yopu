@@ -3,6 +3,7 @@
 #include "freefall.h"
 #include "../player/board.h"
 #include "../player/input.h"
+#include "../player/chain.h"
 #include "../media/sound.h"
 #include <iostream>
 
@@ -14,9 +15,10 @@ constexpr int ROTATION_FRAMES = 7;
 struct ControlFrame {
     registry& reg;
     const player::Input& input;
-    const player::Board& board;
+    player::Board& board;
     const entity& main;
     const entity& slave;
+    const entity& player;
     puyo::Control& control;
     puyo::GridIndex& mainIndex;
     puyo::GridIndex& slaveIndex;
@@ -64,8 +66,8 @@ static void applyMovement(const ControlFrame& frame) {
     if (!frame.control.shift && !frame.control.locked && frame.input.dx != 0) {
 
         // Check if destination is blocked our out of bounds
-        bool blocked = isBlocked(frame.board, { frame.mainIndex.x + frame.input.dx, frame.mainIndex.y })
-            || isBlocked(frame.board, { frame.slaveIndex.x + frame.input.dx, frame.slaveIndex.y });
+        bool blocked = frame.board.isBlocked({ frame.mainIndex.x + frame.input.dx, frame.mainIndex.y })
+            || frame.board.isBlocked({ frame.slaveIndex.x + frame.input.dx, frame.slaveIndex.y });
 
         // Acknowledge movement
         if (!blocked) {
@@ -106,7 +108,7 @@ static void applyRotation(const ControlFrame& frame) {
         auto push = puyo::GridIndex{ 0, 0 };
 
         // Check if destination or diagonal is blocked
-        if (isBlocked(frame.board, dst) || isBlocked(frame.board, diag)) {
+        if (frame.board.isBlocked(dst) || frame.board.isBlocked(diag)) {
 
             // Opposite cell check
             auto opposite = puyo::GridIndex{
@@ -121,7 +123,7 @@ static void applyRotation(const ControlFrame& frame) {
             }
 
             // Double-rotation
-            if (isBlocked(frame.board, opposite)) {
+            if (frame.board.isBlocked(opposite)) {
                 frame.control.rotationCounter++;
                 if (frame.control.rotationCounter % 2 == 1) {
                     rotable = false;
@@ -208,8 +210,8 @@ static void applyDrop(const ControlFrame& frame) {
 
     if (!frame.control.locked) {
         // Check if cell below  is blocked our out of bounds
-        bool mainBlocked = isBlocked(frame.board, { frame.mainIndex.x, frame.mainIndex.y + 1 });
-        bool slaveBlocked = isBlocked(frame.board, { frame.slaveIndex.x, frame.slaveIndex.y + 1 });
+        bool mainBlocked = frame.board.isBlocked({ frame.mainIndex.x, frame.mainIndex.y + 1 });
+        bool slaveBlocked = frame.board.isBlocked({ frame.slaveIndex.x, frame.slaveIndex.y + 1 });
         bool blocked = mainBlocked || slaveBlocked;
 
         // Going on to the next cell
@@ -261,6 +263,40 @@ static void applyDrop(const ControlFrame& frame) {
     }
 }
 
+// After control is locked and animations finished, separate puyos and either freefall or place on board
+static void pairSplit(const ControlFrame& frame) {
+
+    // Wait for any rotation animations to finish
+    bool rotating = frame.reg.has<puyo::RotateAnimation>(frame.slave);
+
+    // Pair split when reached bottom and is locked out
+    if (!rotating && frame.control.locked && frame.mainIndex.drop == puyo::DROP_RES) {
+        frame.reg.remove<puyo::Control>(frame.main);
+        frame.reg.emplace<player::Freefalling>(frame.player);
+
+        // Freefall puyo that isn't blocked
+        bool mainBlocked = frame.board.isBlocked({ frame.mainIndex.x, frame.mainIndex.y + 1 });
+        bool slaveBlocked = frame.board.isBlocked({ frame.slaveIndex.x, frame.slaveIndex.y + 1 });
+        bool stacked = (frame.mainIndex.x == frame.slaveIndex.x);
+
+        // Setup gravity parameters or place directly on board
+        if (!stacked && !mainBlocked) {
+            auto& mainGravity = frame.reg.emplace<puyo::Gravity>(frame.main, puyo::Gravity::mainPuyoFallDelay,
+                puyo::Gravity::puyoInitialSpeed, puyo::Gravity::puyoTerminalSpeed, puyo::Gravity::puyoAcceleration);
+        }
+        else {
+            frame.board.setCell(frame.mainIndex, frame.main);
+        }
+        // Same for slave puyo
+        if (!stacked && !slaveBlocked) {
+            auto& slaveGravity = frame.reg.emplace<puyo::Gravity>(frame.slave, puyo::Gravity::slavePuyoFallDelay,
+                puyo::Gravity::puyoInitialSpeed, puyo::Gravity::puyoTerminalSpeed, puyo::Gravity::puyoAcceleration);
+        }
+        else {
+            frame.board.setCell(frame.slaveIndex, frame.slave);
+        }
+    }
+}
 
 void puyo::control(registry& reg) {
     auto view = reg.view<puyo::GridIndex, puyo::RenderPosition, puyo::Parent, puyo::Control>();
@@ -289,6 +325,7 @@ void puyo::control(registry& reg) {
             board,
             main,
             slave,
+            player,
             control,
             mainIndex,
             slaveIndex,
@@ -299,41 +336,10 @@ void puyo::control(registry& reg) {
         applyMovement(frame);
         applyRotation(frame);
         applyDrop(frame);
+        pairSplit(frame);
 
         /*TEMP*/ if (input.keys[player::InputKey::Up].isDown) {
             control.locked = true;
-            mainIndex.drop == puyo::DROP_RES;
-        }
-
-        // Wait for any rotation animations to finish
-        bool rotating = reg.has<puyo::RotateAnimation>(slave);
-
-        /*TEMP*/ if (rotating) std::cout << "anim playing" << std::endl;
-
-        // Pair split when reached bottom and is locked out
-        if (!rotating && frame.control.locked && frame.mainIndex.drop == puyo::DROP_RES) {
-            reg.remove<Control>(frame.main);
-
-            // Freefall puyo that isn't blocked
-            bool mainBlocked = isBlocked(frame.board, { frame.mainIndex.x, frame.mainIndex.y + 1 });
-            bool slaveBlocked = isBlocked(frame.board, { frame.slaveIndex.x, frame.slaveIndex.y + 1 });
-            bool stacked = (frame.mainIndex.x == frame.slaveIndex.x);
-
-            // Setup gravity parameters
-            if (!stacked && !mainBlocked) {
-                auto& mainGravity = reg.emplace<Gravity>(frame.main, Gravity::mainPuyoFallDelay,
-                    Gravity::puyoInitialSpeed, Gravity::puyoTerminalSpeed, Gravity::puyoAcceleration);
-            }
-            else {
-                // TODO: next step: placement
-            }
-            if (!stacked && !slaveBlocked) {
-                auto& slaveGravity = reg.emplace<Gravity>(frame.slave, Gravity::slavePuyoFallDelay,
-                    Gravity::puyoInitialSpeed, Gravity::puyoTerminalSpeed, Gravity::puyoAcceleration);
-            }
-            else {
-                // TODO: next step: placement
-            }
         }
     }
 

@@ -1,63 +1,77 @@
 #include "freefall.h"
 #include "puyo.h"
 #include "../player/board.h"
+#include "../player/chain.h"
 #include "../media/sound.h"
 #include <iostream>
 
 void puyo::freefall(registry& reg) {
-    auto view = reg.view<puyo::GridIndex, puyo::RenderPosition, puyo::Parent, puyo::Gravity>();
-    for (auto& puyo : view) {
-        // Get main and slave structures
-        auto& index = view.get<puyo::GridIndex>(puyo);
-        auto& player = view.get<puyo::Parent>(puyo).player;
-        auto& gravity = view.get<puyo::Gravity>(puyo);
-        auto& renderPos = view.get<puyo::RenderPosition>(puyo);
+    for (auto& player : reg.view<player::Freefalling>()) {
+        auto view = reg.view<puyo::GridIndex, puyo::RenderPosition, puyo::Parent, puyo::Gravity>();
 
-        // Wait a few frames before starting freefall
-        if (gravity.fallDelay > 0) {
-            gravity.fallDelay--;
-            continue;
-        }
+        bool falling = false;
+        for (auto& puyo : view) {
 
-        // Get board from associated player
-        if (!reg.has<player::Board>(player)) {
-            continue;
-        }
-        auto& board = reg.get<player::Board>(player);
+            // Filter to relevant player in freefalling stage
+            if (view.get<puyo::Parent>(puyo).player != player) continue;
+            falling = true;
 
-        // Apply freefall displacement
-        index.drop += gravity.speed;
-        
-        // Check if passed a board cell
-        if (index.drop >= puyo::DROP_RES) {
-            // If the new cell is blocked, set to the bottom of the last free cell
-            if (isBlocked(board, { index.x, index.y + 1 })) {
-                index.drop = puyo::DROP_RES;
+            // Get main and slave structures
+            auto& index = view.get<puyo::GridIndex>(puyo);
+            auto& gravity = view.get<puyo::Gravity>(puyo);
+            auto& renderPos = view.get<puyo::RenderPosition>(puyo);
 
-                // Play bouncing animation
-                reg.emplace<puyo::BounceAnimation>(puyo);
-
-                // Play placement sound effect 
-                media::play(reg, media::SoundEffect::Drop);
-
-                // Finish freefall here
-                reg.remove<puyo::Gravity>(puyo);
+            // Wait a few frames before starting freefall
+            if (gravity.fallDelay > 0) {
+                gravity.fallDelay--;
+                continue;
             }
-            else {
-                // advance cell
-                index.drop -= puyo::DROP_RES;
-                index.y++;
+
+            // Get board from associated player
+            if (!reg.has<player::Board>(player)) {
+                continue;
             }
+            auto& board = reg.get<player::Board>(player);
+
+            // Apply freefall displacement
+            index.drop += gravity.speed;
+
+            // Accelerate and cap speed
+            gravity.speed = std::min(gravity.speed + gravity.acceleration, gravity.terminalSpeed);
+
+            // Check if passed a board cell
+            if (index.drop >= puyo::DROP_RES) {
+                // If the new cell is blocked, set to the bottom of the last free cell
+                if (board.isBlocked({ index.x, index.y + 1 })) {
+                    index.drop = puyo::DROP_RES;
+
+                    // Play bouncing animation
+                    reg.emplace<puyo::BounceAnimation>(puyo);
+
+                    // Play placement sound effect 
+                    media::play(reg, media::SoundEffect::Drop);
+
+                    // Finish freefall here
+                    reg.remove<puyo::Gravity>(puyo);
+                    board.setCell(index, puyo);
+                }
+                else {
+                    // advance cell
+                    index.drop -= puyo::DROP_RES;
+                    index.y++;
+                }
+            }
+
+            // Update render coordinate
+            /*TEMP*/ renderPos.y = index.y * puyo::TILE_SIZE + index.drop * puyo::TILE_SIZE / puyo::DROP_RES;
         }
-                
-        // Update render coordinate
-        /*TEMP*/ renderPos.y = index.y * puyo::TILE_SIZE + index.drop * puyo::TILE_SIZE / puyo::DROP_RES;
 
-        // Accelerate and cap speed
-        gravity.speed = std::min(gravity.speed + gravity.acceleration, gravity.terminalSpeed);
-
+        // When placed last falling puyo, start chain resolving
+        if (!falling) {
+            reg.remove<player::Freefalling>(player);
+            reg.emplace<player::Chain>(player);
+        }
     }
-
 
     /*
     Cases: Free fall speed differs for:

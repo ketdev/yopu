@@ -23,24 +23,32 @@ namespace player {
                 row.resize(columns);
             }
         }
+
+        // -- Utils --
+
+        // Returns the entity at the cell of a given grid index
+        // Returns noentity if out of bounds
+        inline entity getCell(puyo::GridIndex pos) const {
+            if ((pos.x >= columns) || (pos.x < 0)
+                || (pos.y >= rows) || (pos.y < 0))
+                return noentity;
+            return grid[pos.y][pos.x];
+        }
+
+        // Sets an entity at the cell with a given grid index
+        inline void setCell(puyo::GridIndex pos, entity puyo) {
+            if ((pos.x < columns) && (pos.x >= 0)
+                && (pos.y < rows) && (pos.y > 0))
+                grid[pos.y][pos.x] = puyo;
+        }
+
+        // Checks if a index is non empty or out of bounds within the board grid
+        inline bool isBlocked(puyo::GridIndex pos) {
+            return ((pos.x >= columns) || (pos.x < 0)
+                || (pos.y >= rows) || (pos.y < 0)
+                || noentity != grid[pos.y][pos.x]);
+        }
+
 	};
-
-    // -- Utils --
-
-    // Returns the entity at the cell of a given grid index
-    // Returns noentity if out of bounds
-    static inline entity getCell(player::Board board, puyo::GridIndex pos) {
-        if ((pos.x >= player::Board::columns) || (pos.x < 0)
-            || (pos.y >= player::Board::rows) || (pos.y < 0))
-            return noentity;
-        return board.grid[pos.y][pos.x];
-    }
-
-    // Checks if a index is non empty or out of bounds within the board grid
-    static inline bool isBlocked(player::Board board, puyo::GridIndex pos) {
-        return ((pos.x >= player::Board::columns) || (pos.x < 0)
-            || (pos.y >= player::Board::rows) || (pos.y < 0) 
-            || noentity != board.grid[pos.y][pos.x]);
-    }
-
+    
 }
