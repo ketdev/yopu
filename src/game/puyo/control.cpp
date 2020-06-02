@@ -3,7 +3,7 @@
 #include "freefall.h"
 #include "../player/board.h"
 #include "../player/input.h"
-#include "../player/chain.h"
+#include "../player/resolve.h"
 #include "../media/sound.h"
 #include <iostream>
 
@@ -226,7 +226,8 @@ static void applyDrop(const ControlFrame& frame) {
             // In Tsu, plays bounce right after passing half a cell, 
             // but drop display position is different (rendered a half tile ahead)
             // Instead, we play bounce animations but without delaying gameplay
-            if (!frame.reg.has<puyo::BounceAnimation>(frame.main)) {
+            if (!frame.reg.has<puyo::BounceAnimation>(frame.main) 
+                && !frame.reg.has<puyo::BounceAnimation>(frame.slave)) {
                 // Both bounce if stacked on top of each other
                 bool stacked = (frame.mainIndex.x == frame.slaveIndex.x);
 
@@ -242,7 +243,6 @@ static void applyDrop(const ControlFrame& frame) {
                 media::play(frame.reg, media::SoundEffect::Drop);
             }
 
-            std::cout << "Grace: " << int(frame.control.graceCounter) << std::endl;
             frame.control.graceCounter++;
             if (softDrop) { // skip grace period when soft dropping
                 frame.control.graceCounter = frame.control.gracePeriod;
@@ -264,6 +264,7 @@ static void applyDrop(const ControlFrame& frame) {
 }
 
 // After control is locked and animations finished, separate puyos and either freefall or place on board
+// - Animation: Blinking
 static void pairSplit(const ControlFrame& frame) {
 
     // Wait for any rotation animations to finish
@@ -271,30 +272,25 @@ static void pairSplit(const ControlFrame& frame) {
 
     // Pair split when reached bottom and is locked out
     if (!rotating && frame.control.locked && frame.mainIndex.drop == puyo::DROP_RES) {
-        frame.reg.remove<puyo::Control>(frame.main);
-        frame.reg.emplace<player::Freefalling>(frame.player);
+        std::cout << "pair split" << std::endl;
 
-        // Freefall puyo that isn't blocked
-        bool mainBlocked = frame.board.isBlocked({ frame.mainIndex.x, frame.mainIndex.y + 1 });
-        bool slaveBlocked = frame.board.isBlocked({ frame.slaveIndex.x, frame.slaveIndex.y + 1 });
-        bool stacked = (frame.mainIndex.x == frame.slaveIndex.x);
+        // Delay placement
+        // On Tsu, slave has an additional frame delay, here we do them symetrical
+        if (frame.control.splitCounter == puyo::Control::splitFallDelay) {
+            frame.reg.remove<puyo::Control>(frame.main);
+            frame.reg.remove<puyo::BlinkingAnimation>(frame.main);
 
-        // Setup gravity parameters or place directly on board
-        if (!stacked && !mainBlocked) {
-            auto& mainGravity = frame.reg.emplace<puyo::Gravity>(frame.main, puyo::Gravity::mainPuyoFallDelay,
-                puyo::Gravity::puyoInitialSpeed, puyo::Gravity::puyoTerminalSpeed, puyo::Gravity::puyoAcceleration);
-        }
-        else {
+            // Set on board
             frame.board.setCell(frame.mainIndex, frame.main);
-        }
-        // Same for slave puyo
-        if (!stacked && !slaveBlocked) {
-            auto& slaveGravity = frame.reg.emplace<puyo::Gravity>(frame.slave, puyo::Gravity::slavePuyoFallDelay,
-                puyo::Gravity::puyoInitialSpeed, puyo::Gravity::puyoTerminalSpeed, puyo::Gravity::puyoAcceleration);
-        }
-        else {
             frame.board.setCell(frame.slaveIndex, frame.slave);
+
+            // Enter freefalling stage
+            frame.reg.emplace_or_replace<player::Freefalling>(frame.player);
+            frame.reg.emplace<player::Chain>(frame.player);
         }
+
+        // Advance counter
+        frame.control.splitCounter++;
     }
 }
 

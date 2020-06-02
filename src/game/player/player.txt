@@ -2,19 +2,12 @@
 Player states:
     - ...
     - (Board) Resolve chains (wait until idle)
-        - Freefall
-        - Pop groups
+        - ...
         - Score calculation
         - [repeat]
 
     - Victory (external set)
     - Game Over (internal set)
-
-Systems:
-    - ...
-        + Board settled event
-
-    - [POP] on Settled Board
 
 Player Data:
     - ...

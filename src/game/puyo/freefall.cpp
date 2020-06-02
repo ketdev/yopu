@@ -1,76 +1,53 @@
 #include "freefall.h"
 #include "puyo.h"
+#include "animate.h"
 #include "../player/board.h"
-#include "../player/chain.h"
+#include "../player/resolve.h"
 #include "../media/sound.h"
 #include <iostream>
 
 void puyo::freefall(registry& reg) {
-    for (auto& player : reg.view<player::Freefalling>()) {
-        auto view = reg.view<puyo::GridIndex, puyo::RenderPosition, puyo::Parent, puyo::Gravity>();
+    auto playerView = reg.view<player::Board, player::Freefalling>();
+    for (auto& player : playerView) {
+        auto& board = playerView.get<player::Board>(player);
+        std::cout << "freefall" << std::endl;
 
-        bool falling = false;
-        for (auto& puyo : view) {
-
-            // Filter to relevant player in freefalling stage
-            if (view.get<puyo::Parent>(puyo).player != player) continue;
-            falling = true;
-
-            // Get main and slave structures
-            auto& index = view.get<puyo::GridIndex>(puyo);
-            auto& gravity = view.get<puyo::Gravity>(puyo);
-            auto& renderPos = view.get<puyo::RenderPosition>(puyo);
-
-            // Wait a few frames before starting freefall
-            if (gravity.fallDelay > 0) {
-                gravity.fallDelay--;
-                continue;
-            }
-
-            // Get board from associated player
-            if (!reg.has<player::Board>(player)) {
-                continue;
-            }
-            auto& board = reg.get<player::Board>(player);
-
-            // Apply freefall displacement
-            index.drop += gravity.speed;
-
-            // Accelerate and cap speed
-            gravity.speed = std::min(gravity.speed + gravity.acceleration, gravity.terminalSpeed);
-
-            // Check if passed a board cell
-            if (index.drop >= puyo::DROP_RES) {
-                // If the new cell is blocked, set to the bottom of the last free cell
-                if (board.isBlocked({ index.x, index.y + 1 })) {
-                    index.drop = puyo::DROP_RES;
-
-                    // Play bouncing animation
-                    reg.emplace<puyo::BounceAnimation>(puyo);
-
-                    // Play placement sound effect 
-                    media::play(reg, media::SoundEffect::Drop);
-
-                    // Finish freefall here
-                    reg.remove<puyo::Gravity>(puyo);
-                    board.setCell(index, puyo);
+        // Drop hanging puyos
+        for (auto x = 0; x < player::Board::columns; x++) {
+            int drop = 0;
+            for (auto y = player::Board::rows - 1; y >= 0; y--) {
+                if (!board.isBlocked({ x, y })) {
+                    drop++;
                 }
-                else {
-                    // advance cell
-                    index.drop -= puyo::DROP_RES;
-                    index.y++;
-                }
-            }
+                else if (drop > 0 && board.isBlocked({ x,y })) {
+                    std::cout << "Hang: (" << x << ", " << y << ") Drop: " << drop << std::endl;
 
-            // Update render coordinate
-            /*TEMP*/ renderPos.y = index.y * puyo::TILE_SIZE + index.drop * puyo::TILE_SIZE / puyo::DROP_RES;
+                    // set at target
+                    auto puyo = board.getCell({ x, y });
+                    board.setCell({ x, y }, noentity);
+                    board.setCell({ x, y + drop }, puyo);
+                    reg.emplace_or_replace<puyo::GridIndex>(puyo, x, y + drop, DROP_RES);
+
+                    // Add gravity animation
+                    reg.emplace<puyo::GravityAnimation>(puyo, drop * TILE_SIZE, 1.0, 8.0, 0.1875);
+                }
+
+            }
         }
 
-        // When placed last falling puyo, start chain resolving
-        if (!falling) {
+        // Wait while puyos are falling
+        bool isFalling = false;
+        auto gravityView = reg.view<puyo::Parent, puyo::GravityAnimation>();
+        for (auto& puyo : gravityView) {
+            auto& parent = gravityView.get<puyo::Parent>(puyo).player;
+            if (parent == player) isFalling = true;
+        }
+
+        // Exit freefall stage
+        if (!isFalling) {
             reg.remove<player::Freefalling>(player);
-            reg.emplace<player::Chain>(player);
         }
+
     }
 
     /*

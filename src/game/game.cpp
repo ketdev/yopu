@@ -10,14 +10,15 @@
 #include "entity.h"
 
 // Get our systems
+#include "player\input.h"
 #include "player\board.h"
 #include "player\spawner.h"
-#include "player\input.h"
-#include "player\chain.h"
+#include "player\resolve.h"
 
 #include "puyo\puyo.h"
 #include "puyo\control.h"
 #include "puyo\freefall.h"
+#include "puyo\animate.h"
 
 #include "media\sound.h"
 
@@ -58,6 +59,7 @@ void Game::render(SDL::Renderer& renderer, int frame) {
     /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
 
     media::soundPlayer(_reg);
+    puyo::gravity(_reg);
 
     applyTranslationAnimation();
     applyRotationAnimation();

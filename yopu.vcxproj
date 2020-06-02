@@ -162,9 +162,10 @@
     <ClCompile Include="src\engine\app.cpp" />
     <ClCompile Include="src\game\game.cpp" />
     <ClCompile Include="src\game\media\soundplayer.cpp" />
-    <ClCompile Include="src\game\player\chain.cpp" />
+    <ClCompile Include="src\game\player\resolve.cpp" />
     <ClCompile Include="src\game\player\input.cpp" />
     <ClCompile Include="src\game\player\spawn.cpp" />
+    <ClCompile Include="src\game\puyo\animate.cpp" />
     <ClCompile Include="src\game\puyo\control.cpp" />
     <ClCompile Include="src\game\puyo\freefall.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -179,10 +180,11 @@
     <ClInclude Include="src\game\game.hpp" />
     <ClInclude Include="src\game\media\sound.h" />
     <ClInclude Include="src\game\player\board.h" />
-    <ClInclude Include="src\game\player\chain.h" />
+    <ClInclude Include="src\game\player\resolve.h" />
     <ClInclude Include="src\game\player\input.h" />
     <ClInclude Include="src\game\player\spawner.h" />
     <ClInclude Include="src\game\puyo.hpp" />
+    <ClInclude Include="src\game\puyo\animate.h" />
     <ClInclude Include="src\game\puyo\control.h" />
     <ClInclude Include="src\game\puyo\freefall.h" />
     <ClInclude Include="src\game\puyo\puyo.h" />

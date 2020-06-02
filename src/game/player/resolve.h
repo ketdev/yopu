@@ -5,6 +5,9 @@
 
 namespace player {
 
+    // Constants
+    static constexpr int groupPopSize = 4;
+
     // -- Tags --
 
     // Freefalling stage, waiting for all falling puyos to settle

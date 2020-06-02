@@ -15,7 +15,7 @@ static puyo::Color nextColor(player::Spawner& spawner) {
         auto type = static_cast<puyo::Color>((*spawner.randgen)() % spawner.colorCount);
         spawner.pool->push_back(type);
     }
-    return (*spawner.pool)[spawner.poolIndex];
+    return (*spawner.pool)[spawner.poolIndex++];
 }
 
 static entity makePuyo(registry& reg, puyo::Color type, puyo::GridIndex pos, entity player) {
@@ -34,8 +34,7 @@ static entity makePuyo(registry& reg, puyo::Color type, puyo::GridIndex pos, ent
 
 // Spawns puyos and garbages to the player board, 
 // if spawner slots are full, sets the Game Over tag on the player
-//      reg: our entity registry
-//      spawnPool: a shared spawn pool used for all players
+// + Animation: Blinking
 void player::spawn(registry& reg) {
     auto view = reg.view<player::Board, player::Spawner, player::Idle>();
     for (auto& player : view) {
@@ -44,7 +43,8 @@ void player::spawn(registry& reg) {
         
         // Game Over if one spawner cell is not empty
         if (board.isBlocked(spawner.mainSpawn) || board.isBlocked(spawner.slaveSpawn)) {
-            reg.emplace<player::GameOver>(player);
+            reg.emplace_or_replace<player::GameOver>(player);
+            std::cout << "Game Over" << std::endl;
             return;
         }
 
