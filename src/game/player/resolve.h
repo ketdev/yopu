@@ -1,12 +1,9 @@
 #pragma once
-#include <vector>
+#include <set>
 #include "../entity.h"
 #include "../puyo/puyo.h"
 
 namespace player {
-
-    // Constants
-    static constexpr int groupPopSize = 4;
 
     // -- Tags --
 
@@ -17,10 +14,22 @@ namespace player {
 
     struct Score {
         int sum = 0;
+
+        // TODO: add to other player, not self
+        int chainingGarbage = 0; // pending during chaining process
+        int garbage = 0; // ready to be dropped
+        double garbageLeftover = 0;
     };
 
     struct Chain {
+        static constexpr int popSize = 4;
+        static constexpr int nuisanceCost = 70;
+
         int length = 0;
+        int sizePower = 0;
+        int chainPower = 0;
+
+        int scoreSum = 0;
     };
 
     // -- Systems --

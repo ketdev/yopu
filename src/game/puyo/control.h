@@ -8,7 +8,7 @@ namespace puyo {
     // -- Components --
 
     struct Control {
-        int dropSpeed = DROP_RES / 16; // 16 frames needed to cross a cell
+        int dropSpeed = 0; // DROP_RES / 16; // 16 frames needed to cross a cell
 
         static constexpr int softDropSpeed = DROP_RES / 2;   // 2 frames needed to cross a cell when pushing down
         static constexpr int gracePeriod = 32;               // frames the player can still move the puyo after hitting a floor

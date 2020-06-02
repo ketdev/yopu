@@ -10,7 +10,6 @@ void puyo::freefall(registry& reg) {
     auto playerView = reg.view<player::Board, player::Freefalling>();
     for (auto& player : playerView) {
         auto& board = playerView.get<player::Board>(player);
-        std::cout << "freefall" << std::endl;
 
         // Drop hanging puyos
         for (auto x = 0; x < player::Board::columns; x++) {

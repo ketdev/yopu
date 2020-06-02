@@ -1,4 +1,4 @@
-#include "resolve.h"
+﻿#include "resolve.h"
 #include "board.h"
 #include "spawner.h"
 #include "../puyo/freefall.h"
@@ -95,40 +95,44 @@ void player::resolve(registry& reg) {
 
         auto groups = groupColors(reg, board);
 
-        /*TEMP*/ // Print groups
-        /*TEMP*/ std::cout << "Groups:" << std::endl;
-        /*TEMP*/ int groupIndex = 0;
-        /*TEMP*/ for (auto& g : groups) {
-        /*TEMP*/     std::cout << "  Group:" << groupIndex++ << std::endl;
-        /*TEMP*/     for (auto& p : g) {
-        /*TEMP*/         auto color = reg.try_get<puyo::Color>(p);
-        /*TEMP*/         auto index = reg.try_get<puyo::GridIndex>(p);
-        /*TEMP*/         std::cout << "    (" << index->x << "," << index->y << ") color: " << int(*color) << std::endl;
-        /*TEMP*/     }
-        /*TEMP*/ }
-        /*TEMP*/ // Print board
-        /*TEMP*/ std::cout << "Board:" << std::endl;
-        /*TEMP*/ for (auto yi = 0; yi < player::Board::rows; yi++) {
-        /*TEMP*/     for (auto xi = 0; xi < player::Board::columns; xi++) {
-        /*TEMP*/         auto puyo = board.getCell({ xi, yi });
-        /*TEMP*/         auto colorPtr = reg.try_get<puyo::Color>(puyo);
-        /*TEMP*/         if (colorPtr) {
-        /*TEMP*/             std::cout << int(*colorPtr);
-        /*TEMP*/         }
-        /*TEMP*/         else {
-        /*TEMP*/             std::cout << '.';
-        /*TEMP*/         }
-        /*TEMP*/     }
-        /*TEMP*/     std::cout << std::endl;
-        /*TEMP*/ }
+        // Score = (10 * PC) * (CP + CB + GB)
+        // (10 * puyos cleared * variable factor, capped to 65535)
+        // (chain power + color bonus + group bonus, capped to 999)
+        // current chain length
+        // number of puyo groups to be cleared (for group bonus)
+
+        // Calculate score parts
+        int puyoCount = 0;
+        int groupBonus = 0;
+        std::set<puyo::Color> clearedColors;
 
         // Pop larger groups
         bool popped = false;
         for (auto& group : groups) {
-            if (group.size() >= player::groupPopSize) {
+            if (group.size() >= player::Chain::popSize) {
                 popped = true;
+                auto size = group.size();
+
+                // Accumulate puyo count
+                puyoCount += size;
+
+                // Accumulate group bonus: how many puyo are in the group
+                //  4	0	
+                //  5	2	
+                //  6	3	
+                //  7	4	
+                //  8	5	
+                //  9	6
+                //  10	7
+                //  11+	10
+                if (size > 4) {
+                    groupBonus += (size < 11) ? (size - 3) : 10;
+                }
+
+                puyo::Color color;
                 for (auto& puyo : group) {
                     auto& index = reg.get<puyo::GridIndex>(puyo);
+                    color = reg.get<puyo::Color>(puyo);
 
                     // clear puyo from game
                     board.setCell(index, noentity);
@@ -136,17 +140,81 @@ void player::resolve(registry& reg) {
 
                     // TODO: pop animation
                 }
+
+                clearedColors.insert(color);
             }
         }
 
-        // Freefall possibly hanging puyos
+        // Score calculation
         if (popped) {
+            chain.length++;
+
+            // Calculate chain power: length of chain
+            //  1   0
+            //  2	8
+            //  3	16
+            //  4	32
+            //  ... +32
+            int chainPower = 0;
+            switch (chain.length) {
+            case 1: chainPower = 0; break;
+            case 2: chainPower = 8; break;
+            case 3: chainPower = 16; break;
+            default: chainPower = 32 * (chain.length - 3); break;
+            }
+
+            // Calculate color bonus: number of different color puyo were cleared in the chain
+            //  1	0
+            //  2	3
+            //  3	6
+            //  4	12
+            //  5	24
+            //  6   48
+            int colorBonus = 0;
+            if (clearedColors.size() > 1)
+                colorBonus = 3 * (1 << (clearedColors.size() - 2));
+
+            chain.sizePower = 10 * puyoCount;
+            chain.chainPower = std::max(1, std::min(999, chainPower + colorBonus + groupBonus));
+            auto chainStepScore = chain.sizePower * chain.chainPower;
+            chain.scoreSum += chainStepScore;
+            score.sum += chainStepScore;
+
+            /*TEMP*/ std::cout << "-- CHAIN: " << chain.length << std::endl;
+            /*TEMP*/ std::cout << "\t(10 * PC) * (CP + CB + GB)" << std::endl;
+            /*TEMP*/ std::cout << "\t(10 * " << puyoCount << ") * (" << chainPower << " + " << colorBonus << " + " << groupBonus << ")" << std::endl;
+            /*TEMP*/ std::cout << "\t" << chain.sizePower << " * " << chain.chainPower << std::endl;
+            /*TEMP*/ std::cout << "\tStep Score: " << chain.sizePower * chain.chainPower << std::endl;
+
+            // Calculate nuisances, while chaining
+            double nuisancePoints = (static_cast<double>(chain.scoreSum) / player::Chain::nuisanceCost) + score.garbageLeftover;
+            score.chainingGarbage = static_cast<int>(std::floor(nuisancePoints));
+
+            std::cout << "\tChain Garbage: " << score.chainingGarbage << std::endl;
+
+            // Freefall possibly hanging puyos
             reg.emplace<player::Freefalling>(player);
-        }
-        // Enter idle stage
+        } 
         else {
+            // Update garbage leftover for next chain
+            double nuisancePoints = (static_cast<double>(chain.scoreSum) / player::Chain::nuisanceCost) + score.garbageLeftover;
+            score.garbageLeftover = nuisancePoints - score.chainingGarbage;
+
+            // Accumulate ready garbage
+            score.garbage += score.chainingGarbage;
+            score.chainingGarbage = 0;
+
+            /*TEMP*/ std::cout << "-- CHAIN END" << std::endl;
+            /*TEMP*/ std::cout << "\tChain Sum: " << chain.scoreSum << std::endl;
+            /*TEMP*/ std::cout << "\tTotal Score: " << score.sum << std::endl;
+            /*TEMP*/ std::cout << "\tTotal Garbage: " << score.garbage << std::endl;
+            /*TEMP*/ std::cout << "\tGarbage Leftover: " << score.garbageLeftover << std::endl;
+
             reg.remove<player::Chain>(player);
+
+            // Enter idle stage
             reg.emplace<player::Idle>(player);
         }
+
     }
 }
