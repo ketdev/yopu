@@ -1,12 +1,12 @@
 #include "freefall.h"
-#include "puyo.h"
-#include "animate.h"
-#include "../player/board.h"
-#include "../player/resolve.h"
+#include "board.h"
+#include "resolve.h"
+#include "../puyo/puyo.h"
+#include "../puyo/animate.h"
 #include "../media/sound.h"
 #include <iostream>
 
-void puyo::freefall(registry& reg) {
+void player::freefall(registry& reg) {
     auto playerView = reg.view<player::Board, player::Freefalling>();
     for (auto& player : playerView) {
         auto& board = playerView.get<player::Board>(player);
@@ -25,10 +25,10 @@ void puyo::freefall(registry& reg) {
                     auto puyo = board.getCell({ x, y });
                     board.setCell({ x, y }, noentity);
                     board.setCell({ x, y + drop }, puyo);
-                    reg.emplace_or_replace<puyo::GridIndex>(puyo, x, y + drop, DROP_RES);
+                    reg.emplace_or_replace<puyo::GridIndex>(puyo, x, y + drop, puyo::DROP_RES);
 
                     // Add gravity animation
-                    reg.emplace<puyo::GravityAnimation>(puyo, drop * TILE_SIZE, 1.0, 8.0, 0.1875);
+                    reg.emplace<puyo::GravityAnimation>(puyo, drop * puyo::TILE_SIZE, 1.0, 8.0, 0.1875);
                 }
 
             }

@@ -167,7 +167,7 @@
     <ClCompile Include="src\game\player\spawn.cpp" />
     <ClCompile Include="src\game\puyo\animate.cpp" />
     <ClCompile Include="src\game\puyo\control.cpp" />
-    <ClCompile Include="src\game\puyo\freefall.cpp" />
+    <ClCompile Include="src\game\player\freefall.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -182,18 +182,15 @@
     <ClInclude Include="src\game\player\board.h" />
     <ClInclude Include="src\game\player\resolve.h" />
     <ClInclude Include="src\game\player\input.h" />
-    <ClInclude Include="src\game\player\spawner.h" />
+    <ClInclude Include="src\game\player\spawn.h" />
     <ClInclude Include="src\game\puyo.hpp" />
     <ClInclude Include="src\game\puyo\animate.h" />
     <ClInclude Include="src\game\puyo\control.h" />
-    <ClInclude Include="src\game\puyo\freefall.h" />
+    <ClInclude Include="src\game\player\freefall.h" />
     <ClInclude Include="src\game\puyo\puyo.h" />
     <ClInclude Include="src\game\settings.hpp" />
     <ClInclude Include="src\utils\clean_ptr.hpp" />
     <ClInclude Include="src\utils\no_copy.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="src\game\player\player.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

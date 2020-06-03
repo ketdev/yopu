@@ -1,8 +1,16 @@
-#include "spawner.h"
+#include "spawn.h"
 #include "board.h"
+#include "resolve.h"
+#include "freefall.h"
 #include "../puyo/puyo.h"
 #include "../puyo/control.h"
+#include <algorithm>
 #include <iostream>
+
+// Return a random number from 0 to max
+static int randomInt(player::Spawner& spawner, int max) {
+    return ((*spawner.randgen)() % max);
+}
 
 // Updates shared pool and returns the puyo at a given spawn index
 //      spawnPool: a shared spawn pool used for all players
@@ -26,7 +34,7 @@ static entity makePuyo(registry& reg, puyo::Color type, puyo::GridIndex pos, ent
 
     // ---
     // TODO: render position based on board, shift, etc...
-    reg.emplace<puyo::RenderPosition>(puyo, pos.x * puyo::TILE_SIZE, pos.y * puyo::TILE_SIZE);
+    reg.emplace<puyo::RenderPosition>(puyo, pos.x * puyo::TILE_SIZE, pos.y * puyo::TILE_SIZE + pos.drop * puyo::TILE_SIZE / puyo::DROP_RES);
     // ---
 
     return puyo;
@@ -36,9 +44,10 @@ static entity makePuyo(registry& reg, puyo::Color type, puyo::GridIndex pos, ent
 // if spawner slots are full, sets the Game Over tag on the player
 // + Animation: Blinking
 void player::spawn(registry& reg) {
-    auto view = reg.view<player::Board, player::Spawner, player::Idle>();
+    auto view = reg.view<player::Board, player::Score, player::Spawner, player::Idle>();
     for (auto& player : view) {
         auto& board = view.get<player::Board>(player);
+        auto& score = view.get<player::Score>(player);
         auto& spawner = view.get<player::Spawner>(player);
         
         // Game Over if one spawner cell is not empty
@@ -48,18 +57,58 @@ void player::spawn(registry& reg) {
             return;
         }
 
-        // Create puyo on spawners
-        auto mainColor = nextColor(spawner);
-        auto slaveColor = nextColor(spawner);
-        auto mainPuyo = makePuyo(reg, mainColor, spawner.mainSpawn, player);
-        auto slavePuyo = makePuyo(reg, slaveColor, spawner.slaveSpawn, player);
+        // Drop garbage if didn't pop last round
+        if (!score.popLastTurn && score.garbage) {
 
-        // Set main puyo as controlled, with a reference to slave puyo
-        reg.emplace<puyo::Control>(mainPuyo).slave = slavePuyo;
-        reg.emplace<puyo::BlinkingAnimation>(mainPuyo);
+            std::cout << "Dropping garbage: " << chunk << std::endl;
 
-        std::cout << "Spawn Main: " << spawner.poolIndex << " Type: " << static_cast<int>(mainColor) << std::endl;
-        std::cout << "Spawn Slave: " << spawner.poolIndex << " Type: " << static_cast<int>(slaveColor) << std::endl;
+            // Spawn garbage rows
+            if (score.garbage > player::Board::columns) {
+                int chunk = std::min(player::Score::maxGarbageRows * player::Board::columns, score.garbage);
+                score.garbage -= chunk;
+
+                // TODO
+            }
+            // Spawn individual garbage puyos
+            else {
+                bool spawnCol[player::Board::columns] = {};
+                for (auto i = 0; i < score.garbage; i++) {
+                    // Get free column to spawn garbage
+                    int column = randomInt(spawner, player::Board::columns - i);
+                    while (spawnCol[column]) {
+                        column = ((column + 1) % player::Board::columns);
+                    }
+                    spawnCol[column] = true;
+
+                    // Create garbage puyos on top row
+                    puyo::GridIndex pos = { column, 0, puyo::DROP_RES };
+                    auto garbage = makePuyo(reg, puyo::Color::Garbage, pos, player);
+                    board.setCell(pos, garbage);
+                }
+                score.garbage = 0;
+            }         
+
+            // Skip control phase
+            reg.emplace<player::Freefalling>(player);
+            reg.emplace<player::Chain>(player);
+        }
+        else {
+            // Reset for new spawn turn
+            score.popLastTurn = false;
+
+            // Create puyo on spawners
+            auto mainColor = nextColor(spawner);
+            auto slaveColor = nextColor(spawner);
+            auto mainPuyo = makePuyo(reg, mainColor, spawner.mainSpawn, player);
+            auto slavePuyo = makePuyo(reg, slaveColor, spawner.slaveSpawn, player);
+
+            // Set main puyo as controlled, with a reference to slave puyo
+            reg.emplace<puyo::Control>(mainPuyo).slave = slavePuyo;
+            reg.emplace<puyo::BlinkingAnimation>(mainPuyo);
+
+            std::cout << "Spawn Main: " << spawner.poolIndex << " Type: " << static_cast<int>(mainColor) << std::endl;
+            std::cout << "Spawn Slave: " << spawner.poolIndex << " Type: " << static_cast<int>(slaveColor) << std::endl;
+        }
 
         reg.remove<player::Idle>(player);
     }

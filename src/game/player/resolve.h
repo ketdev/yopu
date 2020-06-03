@@ -5,19 +5,19 @@
 
 namespace player {
 
-    // -- Tags --
-
-    // Freefalling stage, waiting for all falling puyos to settle
-    struct Freefalling {};
-
     // -- Components --
 
     struct Score {
+        static constexpr int maxGarbageRows = 4;
+
         int sum = 0;
 
         // TODO: add to other player, not self
-        int chainingGarbage = 0; // pending during chaining process
-        int garbage = 0; // ready to be dropped
+        int chainingGarbage = 0;    // pending during chaining process
+        int garbage = 1;            // ready to be dropped
+
+        // Garbage points leftover from last chain
+        bool popLastTurn = false;
         double garbageLeftover = 0;
     };
 

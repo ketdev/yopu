@@ -38,7 +38,7 @@ namespace player {
         // Sets an entity at the cell with a given grid index
         inline void setCell(puyo::GridIndex pos, entity puyo) {
             if ((pos.x < columns) && (pos.x >= 0)
-                && (pos.y < rows) && (pos.y > 0))
+                && (pos.y < rows) && (pos.y >= 0))
                 grid[pos.y][pos.x] = puyo;
         }
 

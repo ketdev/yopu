@@ -1,8 +1,8 @@
 #include "control.h"
 #include "puyo.h"
-#include "freefall.h"
 #include "../player/board.h"
 #include "../player/input.h"
+#include "../player/freefall.h"
 #include "../player/resolve.h"
 #include "../media/sound.h"
 #include <iostream>

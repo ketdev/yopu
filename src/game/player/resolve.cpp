@@ -1,7 +1,7 @@
 ﻿#include "resolve.h"
 #include "board.h"
-#include "spawner.h"
-#include "../puyo/freefall.h"
+#include "spawn.h"
+#include "freefall.h"
 #include "../puyo/animate.h"
 #include <iostream>
 #include <map>
@@ -134,6 +134,20 @@ void player::resolve(registry& reg) {
                     auto& index = reg.get<puyo::GridIndex>(puyo);
                     color = reg.get<puyo::Color>(puyo);
 
+                    // clear surrounding garbage
+                    const auto clearGarbage = [&](int x, int y) {
+                        auto n = board.getCell({ x, y });
+                        auto color = reg.try_get<puyo::Color>(n);
+                        if (color && *color == puyo::Color::Garbage) {
+                            board.setCell({ x, y }, noentity);
+                            reg.destroy(n);
+                        }
+                    };
+                    clearGarbage(index.x, index.y - 1);
+                    clearGarbage(index.x + 1, index.y);
+                    clearGarbage(index.x, index.y + 1);
+                    clearGarbage(index.x - 1, index.y);
+
                     // clear puyo from game
                     board.setCell(index, noentity);
                     reg.destroy(puyo);
@@ -147,6 +161,7 @@ void player::resolve(registry& reg) {
 
         // Score calculation
         if (popped) {
+            score.popLastTurn = true;
             chain.length++;
 
             // Calculate chain power: length of chain

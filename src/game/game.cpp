@@ -10,16 +10,16 @@
 #include "entity.h"
 
 // Get our systems
-#include "player\input.h"
+#include "puyo\puyo.h"
 #include "player\board.h"
-#include "player\spawner.h"
+
+#include "player\input.h"
+#include "player\spawn.h"
+#include "puyo\control.h"
+#include "player\freefall.h"
 #include "player\resolve.h"
 
-#include "puyo\puyo.h"
-#include "puyo\control.h"
-#include "puyo\freefall.h"
 #include "puyo\animate.h"
-
 #include "media\sound.h"
 
 // -- Game Implementation --
@@ -50,7 +50,7 @@ bool Game::logic() {
     player::updateInput(_reg);
     player::spawn(_reg);
     puyo::control(_reg);
-    puyo::freefall(_reg);
+    player::freefall(_reg);
     player::resolve(_reg);
     
     return true;

@@ -1,9 +1,12 @@
 #pragma once
 #include "../entity.h"
 
-namespace puyo {
+namespace player {
 
-	// -- Components --
+	// -- Tags --
+
+	// Freefalling stage, waiting for all falling puyos to settle
+	struct Freefalling {};
 
 	// -- Systems --
 
