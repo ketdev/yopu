@@ -60,7 +60,7 @@ void player::spawn(registry& reg) {
         // Drop garbage if didn't pop last round
         if (!score.popLastTurn && score.garbage) {
 
-            std::cout << "Dropping garbage: " << chunk << std::endl;
+            std::cout << "Dropping garbage: " << score.garbage << std::endl;
 
             // Spawn garbage rows
             if (score.garbage > player::Board::columns) {

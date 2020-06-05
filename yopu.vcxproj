@@ -162,6 +162,7 @@
     <ClCompile Include="src\engine\app.cpp" />
     <ClCompile Include="src\game\game.cpp" />
     <ClCompile Include="src\game\media\soundplayer.cpp" />
+    <ClCompile Include="src\game\media\sprite_render.cpp" />
     <ClCompile Include="src\game\player\resolve.cpp" />
     <ClCompile Include="src\game\player\input.cpp" />
     <ClCompile Include="src\game\player\spawn.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="src\game\entity.h" />
     <ClInclude Include="src\game\game.hpp" />
     <ClInclude Include="src\game\media\sound.h" />
+    <ClInclude Include="src\game\media\sprite.h" />
     <ClInclude Include="src\game\player\board.h" />
     <ClInclude Include="src\game\player\resolve.h" />
     <ClInclude Include="src\game\player\input.h" />
@@ -188,7 +190,7 @@
     <ClInclude Include="src\game\puyo\control.h" />
     <ClInclude Include="src\game\player\freefall.h" />
     <ClInclude Include="src\game\puyo\puyo.h" />
-    <ClInclude Include="src\game\settings.hpp" />
+    <ClInclude Include="src\game\settings.h" />
     <ClInclude Include="src\utils\clean_ptr.hpp" />
     <ClInclude Include="src\utils\no_copy.hpp" />
   </ItemGroup>

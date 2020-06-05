@@ -8,7 +8,6 @@
 
 static const char* ASSET_PATH_TEXTURE = "src/assets/puyos.png";
 
-const int LOCKING_FRAMES = 8;
 const int BLINKING_FRAMES = 10;
 const int BOUNCING_FRAMES = 16;
 

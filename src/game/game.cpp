@@ -21,6 +21,7 @@
 
 #include "puyo\animate.h"
 #include "media\sound.h"
+#include "media\sprite.h"
 
 // -- Game Implementation --
 
@@ -28,9 +29,11 @@ void Game::init(SDL::Renderer& renderer) {
     // Load resources
     _tex = Loader::loadTexture(renderer, ASSET_PATH_TEXTURE);
 
-    // Create player entities
+    // Create our initial entities
+    makeBackground();
     makePlayer(0);
 }
+
 void Game::input(SDL_Scancode sc, bool isDown) {
     // Forward input events to our input components
     auto view = _reg.view<player::Input>();
@@ -44,6 +47,7 @@ void Game::input(SDL_Scancode sc, bool isDown) {
         }
     }
 }
+
 bool Game::logic() {
     /*TEMP*/ //std::cout << "-- Logic --------------------------------------------" << std::endl;
 
@@ -55,11 +59,14 @@ bool Game::logic() {
     
     return true;
 }
+
 void Game::render(SDL::Renderer& renderer, int frame) {
     /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
 
     media::soundPlayer(_reg);
     puyo::gravity(_reg);
+
+    media::spriteRender(_reg, renderer);
 
     applyTranslationAnimation();
     applyRotationAnimation();
@@ -68,6 +75,12 @@ void Game::render(SDL::Renderer& renderer, int frame) {
 
 
 // -- Factories --
+
+entt::entity Game::makeBackground() {
+    auto bg = _reg.create();    
+    _reg.emplace<media::Texture>(bg, media::Texture::Background);
+    return bg;
+}
 
 entt::entity Game::makePlayer(int index) {
     // Shared puyo pool
@@ -214,12 +227,4 @@ void Game::drawPuyos(SDL::Renderer& renderer) {
         SDL_RenderCopy(renderer.get(), _tex.get(), &src, &dst);
     }
 
-}
-
-void Game::renderSprite(SDL::Renderer& renderer) {
-    auto view = _reg.view<puyo::Sprite>();
-    for (auto& e : view) {
-        auto& sprite = view.get<puyo::Sprite>(e);
-        SDL_RenderCopy(renderer.get(), _tex.get(), &sprite.src, &sprite.dst);
-    }
 }

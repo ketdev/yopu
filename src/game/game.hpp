@@ -4,7 +4,7 @@
 
 #include "../engine/igame.hpp"
 #include "../engine/loader.hpp"
-#include "settings.hpp"
+#include "settings.h"
 #include "puyo.hpp"
 
 
@@ -25,12 +25,11 @@ private: // resources
     SDL::Texture _tex;
 
 private: // factories
+    entt::entity makeBackground();
     entt::entity makePlayer(int index);
 
 private:  // render systems
     void applyTranslationAnimation();
     void applyRotationAnimation();
     void drawPuyos(SDL::Renderer& renderer);
-
-    void renderSprite(SDL::Renderer& renderer);
 };

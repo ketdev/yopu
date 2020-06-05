@@ -11,12 +11,6 @@ namespace puyo {
 
     // -- Render Components --
 
-    struct Sprite {
-        //SDL::Texture& texure;
-        SDL_Rect dst, src;
-    };
-
-
     struct RenderPosition {
         int x, y;
     };

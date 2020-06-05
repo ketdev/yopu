@@ -9,6 +9,7 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
+#include <algorithm>
 
 #include "loader.hpp"
 
@@ -21,14 +22,21 @@
 // #include <SDL2/SDL_opengles2.h>
 // #endif
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 1080;
+const int SCREEN_HEIGHT = 1920;
 
 // void handle_resize() {
 //     context_initialized = false;
 //     SDL_GL_GetDrawableSize(window, &width, &height);
 //     // glViewport(0, 0, width, height);
 // }
+
+
+typedef enum PROCESS_DPI_AWARENESS {
+    PROCESS_DPI_UNAWARE = 0,
+    PROCESS_SYSTEM_DPI_AWARE = 1,
+    PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
 
 Application::Application()
     : _frame(0), _running(false), _visible(false), _game(nullptr) {
@@ -59,7 +67,7 @@ void Application::run(IGame* game) {
     SDL::Window window{SDL::check(
         SDL_CreateWindow("Puyo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                          SCREEN_WIDTH * scaleFactor,
-                         SCREEN_HEIGHT * scaleFactor, SDL_WINDOW_SHOWN))};
+                         SCREEN_HEIGHT * scaleFactor, SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI))};
 
     _renderer = SDL::Renderer{SDL::check(SDL_CreateRenderer(
         window.get(), -1,
@@ -134,7 +142,7 @@ void Application::_loop() {
     }
 
     if(_visible){
-        SDL::check(SDL_SetRenderDrawColor(_renderer.get(), 0x06, 0x16, 0x39, 255));
+        //SDL::check(SDL_SetRenderDrawColor(_renderer.get(), 0x06, 0x16, 0x39, 255));
         SDL::check(SDL_RenderClear(_renderer.get()));
 
         // // Fill the surface white
