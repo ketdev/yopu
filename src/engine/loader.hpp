@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <SDL2/SDL_image.h>
-#include "sdl_utils.hpp"
+#include "utils/sdl_utils.h"
 
 struct Loader {
     static SDL::Texture loadTexture(SDL::Renderer& renderer, std::string path) {

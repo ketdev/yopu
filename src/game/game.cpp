@@ -23,6 +23,7 @@
 #include "media\sound.h"
 #include "media\sprite.h"
 
+
 // -- Game Implementation --
 
 void Game::init(SDL::Renderer& renderer) {
@@ -77,8 +78,9 @@ void Game::render(SDL::Renderer& renderer, int frame) {
 // -- Factories --
 
 entt::entity Game::makeBackground() {
-    auto bg = _reg.create();    
-    _reg.emplace<media::Texture>(bg, media::Texture::Background);
+    auto bg = _reg.create();
+    _reg.emplace<media::Sprite>(bg, media::Texture::Background, 
+        glm::ivec4{ 0, 0, 1080, 1920 }, glm::dvec4{ 0, 0, 1, 1 }); // TODO: take from settings
     return bg;
 }
 

@@ -72,26 +72,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\Release\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\Release\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\Release\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -105,7 +105,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;opengl32.lib;glew-2.1.0.mswin.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,7 +120,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;opengl32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -137,7 +139,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;opengl32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,11 +158,16 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_mixer.lib;opengl32.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\app.cpp" />
+    <ClCompile Include="src\engine\system\render.cpp" />
+    <ClCompile Include="src\engine\graphics\shader.cpp" />
+    <ClCompile Include="src\engine\graphics\vertex_array.cpp" />
+    <ClCompile Include="src\engine\graphics\vertex_buffer.cpp" />
     <ClCompile Include="src\game\game.cpp" />
     <ClCompile Include="src\game\media\soundplayer.cpp" />
     <ClCompile Include="src\game\media\sprite_render.cpp" />
@@ -173,10 +181,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\app.hpp" />
+    <ClInclude Include="src\engine\system\render.h" />
+    <ClInclude Include="src\engine\graphics\shader.h" />
+    <ClInclude Include="src\engine\graphics\vertex_array.h" />
+    <ClInclude Include="src\engine\graphics\vertex_buffer.h" />
     <ClInclude Include="src\engine\igame.hpp" />
     <ClInclude Include="src\engine\loader.hpp" />
-    <ClInclude Include="src\engine\sdl_utils.hpp" />
+    <ClInclude Include="src\engine\utils\sdl_utils.h" />
     <ClInclude Include="src\engine\sound.hpp" />
+    <ClInclude Include="src\engine\utils\xgl.h" />
     <ClInclude Include="src\game\entity.h" />
     <ClInclude Include="src\game\game.hpp" />
     <ClInclude Include="src\game\media\sound.h" />
@@ -191,8 +204,8 @@
     <ClInclude Include="src\game\player\freefall.h" />
     <ClInclude Include="src\game\puyo\puyo.h" />
     <ClInclude Include="src\game\settings.h" />
-    <ClInclude Include="src\utils\clean_ptr.hpp" />
-    <ClInclude Include="src\utils\no_copy.hpp" />
+    <ClInclude Include="src\engine\utils\clean_ptr.h" />
+    <ClInclude Include="src\engine\utils\no_copy.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

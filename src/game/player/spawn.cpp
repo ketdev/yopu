@@ -4,6 +4,7 @@
 #include "freefall.h"
 #include "../puyo/puyo.h"
 #include "../puyo/control.h"
+#include "../media/sprite.h"
 #include <algorithm>
 #include <iostream>
 
@@ -23,7 +24,10 @@ static puyo::Color nextColor(player::Spawner& spawner) {
         auto type = static_cast<puyo::Color>((*spawner.randgen)() % spawner.colorCount);
         spawner.pool->push_back(type);
     }
-    return (*spawner.pool)[spawner.poolIndex++];
+    puyo::Color color = (*spawner.pool)[spawner.poolIndex];
+    spawner.poolIndex++;
+    spawner.poolIndex %= 128;
+    return color;
 }
 
 static entity makePuyo(registry& reg, puyo::Color type, puyo::GridIndex pos, entity player) {
@@ -33,8 +37,25 @@ static entity makePuyo(registry& reg, puyo::Color type, puyo::GridIndex pos, ent
     reg.emplace<puyo::Parent>(puyo, player);
 
     // ---
+    constexpr int OFFSET_X = 119;
+    constexpr int OFFSET_Y = 263;
+
     // TODO: render position based on board, shift, etc...
-    reg.emplace<puyo::RenderPosition>(puyo, pos.x * puyo::TILE_SIZE, pos.y * puyo::TILE_SIZE + pos.drop * puyo::TILE_SIZE / puyo::DROP_RES);
+    reg.emplace<puyo::RenderPosition>(puyo, 
+        OFFSET_X + pos.x * puyo::TILE_SIZE,
+        OFFSET_Y + pos.y * puyo::TILE_SIZE + pos.drop * puyo::TILE_SIZE / puyo::DROP_RES);
+    
+
+    //reg.emplace<media::Texture>(puyo, media::Texture::Puyo);
+    //reg.emplace<media::Position>(puyo,
+    //    OFFSET_X + pos.x * puyo::TILE_SIZE,
+    //    OFFSET_Y + pos.y * puyo::TILE_SIZE + pos.drop * puyo::TILE_SIZE / puyo::DROP_RES);
+
+    reg.emplace<media::Sprite>(puyo, media::Texture::Puyo,
+        glm::ivec2{ OFFSET_X + pos.x * 120,
+                    OFFSET_Y + pos.y * 120 + pos.drop * 120 / puyo::DROP_RES },
+        glm::ivec2{ 120, 120 },
+        glm::dvec4{ 0, 0, 1, 1 }, 1);
     // ---
 
     return puyo;

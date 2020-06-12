@@ -1,6 +1,6 @@
 #pragma once
 #include <SDL2/SDL_scancode.h>
-#include "sdl_utils.hpp"
+#include "../engine/utils/sdl_utils.h"
 
 class IGame {
    public:

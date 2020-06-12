@@ -1,5 +1,5 @@
 #pragma once
-#include "sdl_utils.hpp"
+#include "utils/sdl_utils.h"
 
 struct Sound {    
     static void play(const SDL::MixMusic& music) {

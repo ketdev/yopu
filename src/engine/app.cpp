@@ -1,45 +1,17 @@
 #include "app.hpp"
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
+#include "loader.hpp"
 
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <algorithm>
 
-#include "loader.hpp"
-
-// #ifdef __APPLE__
-// #include <OpenGL/gl.h>
-// #include <OpenGL/glext.h>
-// #elif _WIN32 || _WIN64
-// #include <SDL2/SDL_opengl.h>
-// #else
-// #include <SDL2/SDL_opengles2.h>
-// #endif
-
-const int SCREEN_WIDTH = 1080;
-const int SCREEN_HEIGHT = 1920;
-
-// void handle_resize() {
-//     context_initialized = false;
-//     SDL_GL_GetDrawableSize(window, &width, &height);
-//     // glViewport(0, 0, width, height);
-// }
+#include "utils/xgl.h"
+#include <SDL2/SDL_mixer.h>
 
 
-typedef enum PROCESS_DPI_AWARENESS {
-    PROCESS_DPI_UNAWARE = 0,
-    PROCESS_SYSTEM_DPI_AWARE = 1,
-    PROCESS_PER_MONITOR_DPI_AWARE = 2
-} PROCESS_DPI_AWARENESS;
-
-Application::Application()
-    : _frame(0), _running(false), _visible(false), _game(nullptr) {
+Application::Application(const std::string& title, int width, int height)
+    : _title(title), _width(width), _height(height), _frame(0), _running(false), _visible(false), _game(nullptr) {
     SDL::check(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO));
     SDL::check(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024));
 }
@@ -56,25 +28,33 @@ void app_loop_wrap(Application* app) { app->_loop(); }
 void Application::run(IGame* game) {
     _game = game;
 
-    // Make the largest window possible with an integer scale factor
-    // SDL_Rect bounds;
-    // SDL::check(SDL_GetDisplayUsableBounds(0, &bounds));
-    // const int scaleFactor = std::max(
-    //     1, std::min(bounds.w / SCREEN_WIDTH, bounds.h / SCREEN_HEIGHT));
+    _window = SDL::Window{SDL::check(
+        SDL_CreateWindow(_title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _width, _height, 
+            SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI))};
 
-    const int scaleFactor = 1;
+    _context = SDL::GlContext{ SDL::check(SDL_GL_CreateContext(_window.get())) };
 
-    SDL::Window window{SDL::check(
-        SDL_CreateWindow("Puyo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                         SCREEN_WIDTH * scaleFactor,
-                         SCREEN_HEIGHT * scaleFactor, SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI))};
+#ifdef _WIN32 || _WIN64
+    //Initialize GLEW
+    glewExperimental = GL_TRUE;
+    SDL::check(glewInit());
+#endif
+
+    // Initialize openGL settings
+    SDL::check(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+    SDL::check(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0));
+    SDL::check(SDL_GL_SetSwapInterval(1));
+    SDL::check(SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1));
+    SDL::check(SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24));
 
     _renderer = SDL::Renderer{SDL::check(SDL_CreateRenderer(
-        window.get(), -1,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC))};
+        _window.get(), -1,
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC))};
 
-    SDL::check(
-        SDL_RenderSetLogicalSize(_renderer.get(), SCREEN_WIDTH, SCREEN_HEIGHT));
+    // SDL::check(
+    //     SDL_RenderSetLogicalSize(_renderer.get(), SCREEN_WIDTH, SCREEN_HEIGHT));
+
+    _render.reset(new Render());
 
     _game->init(_renderer);
 
@@ -129,10 +109,14 @@ void Application::_loop() {
                     _visible = false;
                     break;
                 }
-                    // case SDL_WINDOWEVENT_SIZE_CHANGED: {
-                    //     handle_resize();
-                    //     break;
-                    // }
+                case SDL_WINDOWEVENT_SIZE_CHANGED: {
+                    _width = e.window.data1;
+                    _height = e.window.data2;
+
+                    SDL_GL_GetDrawableSize(_window.get(), &_width, &_height);
+                    glViewport(0, 0, _width, _height);
+                    break;
+                }
             }
         }
     }
@@ -142,27 +126,24 @@ void Application::_loop() {
     }
 
     if(_visible){
+#if 0        
         //SDL::check(SDL_SetRenderDrawColor(_renderer.get(), 0x06, 0x16, 0x39, 255));
         SDL::check(SDL_RenderClear(_renderer.get()));
-
-        // // Fill the surface white
-        // SDL_FillRect(screenSurface, NULL,
-        //              SDL_MapRGB(screenSurface->format, 0x06, 0x16, 0x39));
-
-        // // Update the surface
-        // SDL_UpdateWindowSurface(window);
 
         _game->render(_renderer, _frame);
         ++_frame;
 
-        // // glClear(GL_COLOR_BUFFER_BIT);
-        // // for (auto layer : layers) {
-        // //     layer->Render(window, !context_initialized);
-        // // }
-
-        // context_initialized = true;
-        // SDL_GL_SwapWindow(window);
-
         SDL_RenderPresent(_renderer.get());
+#else
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        _render->draw();
+
+        //_game->render(_renderer, _frame);
+        ++_frame;
+
+        SDL_GL_SwapWindow(_window.get());
+#endif
     }
 }
