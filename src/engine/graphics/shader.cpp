@@ -72,3 +72,16 @@ void ShaderProgram::use() {
 uint32_t ShaderProgram::getAttribLocation(const std::string& name) {
 	return glGetAttribLocation(id, name.c_str());
 }
+
+uint32_t ShaderProgram::getUniformLocation(const std::string& name) {
+	return glGetUniformLocation(id, name.c_str());
+}
+
+void ShaderProgram::setVector3f(uint32_t location, glm::vec3 vec) {
+	use();
+	glUniform3fv(location, 1, reinterpret_cast<float*>(&vec));
+}
+void ShaderProgram::setMatrix4(uint32_t location, glm::mat4x4 mat){
+	use();
+	glUniformMatrix4fv(location, 1, false, reinterpret_cast<float*>(&mat));
+}

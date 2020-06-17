@@ -47,6 +47,10 @@ void Application::run(IGame* game) {
     SDL::check(SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1));
     SDL::check(SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24));
 
+    // Enable blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     _renderer = SDL::Renderer{SDL::check(SDL_CreateRenderer(
         _window.get(), -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC))};

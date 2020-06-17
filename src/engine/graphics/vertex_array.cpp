@@ -27,3 +27,9 @@ void VertexArray::drawTriangles(uint32_t first, uint32_t count) {
 	glBindVertexArray(id);
 	glDrawArrays(GL_TRIANGLES, first, count);
 }
+
+void VertexArray::drawTriangleStrips(uint32_t first, uint32_t count) {
+	glBindVertexArray(id);
+	glDrawArrays(GL_TRIANGLE_STRIP, first, count);
+}
+

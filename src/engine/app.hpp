@@ -24,6 +24,7 @@ private:
     SDL::Window _window;
     SDL::GlContext _context;
     SDL::Renderer _renderer;
+
     IGame* _game;
 
     // Default systems

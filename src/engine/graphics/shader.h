@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <glm/mat4x4.hpp>
 
 struct Shader {
 	enum class Type {
@@ -29,4 +30,8 @@ struct ShaderProgram {
 	void use();
 
 	uint32_t getAttribLocation(const std::string& name);
+	uint32_t getUniformLocation(const std::string& name);
+
+	void setVector3f(uint32_t location, glm::vec3 vec);
+	void setMatrix4(uint32_t location, glm::mat4x4 mat);
 };

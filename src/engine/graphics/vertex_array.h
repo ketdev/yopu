@@ -12,4 +12,5 @@ struct VertexArray {
 		bool normalized, size_t stride, const void* offset);
 
 	void drawTriangles(uint32_t first, uint32_t count);
+	void drawTriangleStrips(uint32_t first, uint32_t count);
 };

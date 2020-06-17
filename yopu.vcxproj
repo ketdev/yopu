@@ -164,6 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\app.cpp" />
+    <ClCompile Include="src\engine\graphics\texture.cpp" />
     <ClCompile Include="src\engine\system\render.cpp" />
     <ClCompile Include="src\engine\graphics\shader.cpp" />
     <ClCompile Include="src\engine\graphics\vertex_array.cpp" />
@@ -181,6 +182,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\app.hpp" />
+    <ClInclude Include="src\engine\graphics\texture.h" />
     <ClInclude Include="src\engine\system\render.h" />
     <ClInclude Include="src\engine\graphics\shader.h" />
     <ClInclude Include="src\engine\graphics\vertex_array.h" />
