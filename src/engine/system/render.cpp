@@ -61,7 +61,7 @@ void Render::draw() {
 	// Texture2D &texture, glm::vec2 position, glm::vec2 size, float rotate, glm::vec3 color
 	glm::vec2 size = { 512, 512 };
 	glm::vec2 position = { 10, 10 };
-	//float rotate = 0;
+	float rotate = 0;
 	glm::vec3 color = { 1, 1, 1 };
 	//--
 
@@ -72,10 +72,10 @@ void Render::draw() {
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, glm::vec3(position, 0.0f));
 
-	//// rotate around center
-	//model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
-	//model = glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f));
-	//model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+	// rotate around center
+	model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
+	model = glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
 
 	model = glm::scale(model, glm::vec3(size, 1.0f));
 

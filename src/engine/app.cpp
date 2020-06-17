@@ -9,6 +9,10 @@
 #include "utils/xgl.h"
 #include <SDL2/SDL_mixer.h>
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 
 Application::Application(const std::string& title, int width, int height)
     : _title(title), _width(width), _height(height), _frame(0), _running(false), _visible(false), _game(nullptr) {
@@ -60,8 +64,25 @@ void Application::run(IGame* game) {
 
     _render.reset(new Render());
 
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.IniFilename = NULL;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer bindings
+    // window is the SDL_Window*
+    // contex is the SDL_GLContext
+    ImGui_ImplSDL2_InitForOpenGL(_window.get(), _context.get());
+    ImGui_ImplOpenGL3_Init();
+
+    // Setup game 
     _game->init(_renderer);
 
+    // Start game loop
     _visible = true;
     _running = true;
 #ifdef __EMSCRIPTEN__
@@ -79,12 +100,27 @@ void Application::run(IGame* game) {
     }
 #endif
 
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
     return;
 }
 
 void Application::_loop() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+        // Forward to Imgui
+        ImGui_ImplSDL2_ProcessEvent(&e);
+        if (e.type == SDL_QUIT
+            || (e.type == SDL_WINDOWEVENT
+                && e.window.event == SDL_WINDOWEVENT_CLOSE
+                && e.window.windowID == SDL_GetWindowID(_window.get()))) {
+            _running = false;
+        }
+
+        // Forward to game
         switch (e.type) {
             case SDL_QUIT: {
                 _running = false;
@@ -125,29 +161,43 @@ void Application::_loop() {
         }
     }
 
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplSDL2_NewFrame(_window.get());
+    ImGui::NewFrame();
+
+    // Start game frame
     if (!_game->logic()) {
         _running = false;
     }
 
     if(_visible){
-#if 0        
-        //SDL::check(SDL_SetRenderDrawColor(_renderer.get(), 0x06, 0x16, 0x39, 255));
-        SDL::check(SDL_RenderClear(_renderer.get()));
-
-        _game->render(_renderer, _frame);
-        ++_frame;
-
-        SDL_RenderPresent(_renderer.get());
-#else
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Render game
         _render->draw();
 
         //_game->render(_renderer, _frame);
-        ++_frame;
 
+        //--
+        /*TEMP*/ static bool someBoolean;
+        /*TEMP*/ static float speed = 5.0f;
+        /*TEMP*/ ImGui::Begin("MyWindow");
+        /*TEMP*/ ImGui::Checkbox("Boolean property", &someBoolean);
+        /*TEMP*/ if (ImGui::Button("Reset Speed")) {
+        /*TEMP*/     // This code is executed when the user clicks the button
+        /*TEMP*/     speed = 0;
+        /*TEMP*/ }
+        /*TEMP*/ ImGui::SliderFloat("Speed", &speed, 0.0f, 10.0f);
+        /*TEMP*/ ImGui::End();
+        //--
+
+        // Render imgui
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        ++_frame;
         SDL_GL_SwapWindow(_window.get());
-#endif
     }
 }
