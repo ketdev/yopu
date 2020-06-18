@@ -4,7 +4,7 @@
 #include "../player/input.h"
 #include "../player/freefall.h"
 #include "../player/resolve.h"
-#include "../media/sound.h"
+#include "../../media/sound.h"
 #include <iostream>
 
 // Accumulate move input triggers
@@ -333,10 +333,6 @@ void puyo::control(registry& reg) {
         applyRotation(frame);
         applyDrop(frame);
         pairSplit(frame);
-
-        /*TEMP*/ if (input.keys[player::InputKey::Up].isDown) {
-            control.locked = true;
-        }
     }
 
 }

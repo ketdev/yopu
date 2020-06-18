@@ -33,5 +33,6 @@ struct ShaderProgram {
 	uint32_t getUniformLocation(const std::string& name);
 
 	void setVector3f(uint32_t location, glm::vec3 vec);
+	void setVector4f(uint32_t location, glm::vec4 vec);
 	void setMatrix4(uint32_t location, glm::mat4x4 mat);
 };

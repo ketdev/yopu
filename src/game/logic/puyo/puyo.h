@@ -1,7 +1,7 @@
 #pragma once
-#include "../entity.h"
+#include "../../entity.h"
 
-/*TEMP*/ #include "../puyo.hpp"
+/*TEMP*/ #include "../../puyo.hpp"
 
 namespace puyo {
 

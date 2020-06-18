@@ -1,6 +1,6 @@
 #pragma once
 #include <random>
-#include "../entity.h"
+#include "../../entity.h"
 #include "../puyo/puyo.h"
 
 namespace player {

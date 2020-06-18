@@ -3,7 +3,7 @@
 #include "resolve.h"
 #include "../puyo/puyo.h"
 #include "../puyo/animate.h"
-#include "../media/sound.h"
+#include "../../media/sound.h"
 #include <iostream>
 
 void player::freefall(registry& reg) {

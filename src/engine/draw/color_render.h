@@ -5,14 +5,18 @@
 #include "../graphics/shader.h"
 #include "../graphics/texture.h"
 
-class Render {
+#include <memory>
+
+class ColorRender {
 public:
-	Render();
-	void draw();
+	ColorRender();
+	
+	void update(int width, int height);
+	void draw(glm::vec2 pos, glm::vec2 size, glm::vec4 color);
 
 private:
+	glm::mat4 _projection;
 	ShaderProgram _program;
 	VertexBuffer _vbo;
 	VertexArray _vao;
-	Texture _texture;
 };

@@ -1,6 +1,6 @@
 #pragma once
 #include <set>
-#include "../entity.h"
+#include "../../entity.h"
 #include "../puyo/puyo.h"
 
 namespace player {

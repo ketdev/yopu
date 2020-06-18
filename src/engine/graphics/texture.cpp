@@ -9,11 +9,13 @@ inline static GLuint createTexture() {
     return id;
 }
 
-Texture::Texture() : id(createTexture()) {}
+Texture::Texture() : id(createTexture()), width(0), height(0) {}
 Texture::~Texture() { glDeleteTextures(1, &id); }
 
 void Texture::load(const std::string& path) {
     SDL::Surface surface{ SDL::check(IMG_Load(path.c_str())) };
+    *const_cast<uint32_t*>(&this->width) = surface->w;
+    *const_cast<uint32_t*>(&this->height) = surface->h;
 
     int Mode = GL_RGB;
     if (surface->format->BytesPerPixel == 4) {
@@ -26,6 +28,6 @@ void Texture::load(const std::string& path) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void Texture::use() {
+void Texture::use() const{
     glBindTexture(GL_TEXTURE_2D, id);
 }

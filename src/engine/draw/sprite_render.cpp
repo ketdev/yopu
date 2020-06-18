@@ -1,7 +1,6 @@
-#include "render.h"
-#include <glm/mat4x4.hpp>
+#include "sprite_render.h"
 #include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "../utils/xgl.h"
 
@@ -24,13 +23,13 @@ static const char* fragmentSource =
 " out vec4 color;															\n"
 " 																			\n"
 " uniform sampler2D image;													\n"
-" uniform vec3 spriteColor;													\n"
+" uniform vec3 tint;														\n"
 " 																			\n"
 " void main() {																\n"
-" 	color = vec4(spriteColor, 1.0) * texture(image, TexCoords);				\n"
+" 	color = vec4(tint, 1.0) * texture(image, TexCoords);					\n"
 " }																			\n";
 
-Render::Render() {
+SpriteRender::SpriteRender() : _projection(glm::mat4(1.0f)) {	
 	// Compile and link the vertex and fragment shader into a shader program
 	_program.link({
 		Shader(Shader::Type::Vertex, vertexSource),
@@ -48,41 +47,37 @@ Render::Render() {
 
 	// Specify the layout of the vertex data in the Vertex Array Object
 	_vao.setAttrib(_program.getAttribLocation("vertex"), _vbo, false, 0, nullptr);
-
-	// Load our texture into memory
-	_texture.load("src/assets/puyos.png");
 }
 
-void Render::draw() {
-	// Draw a triangle from the 3 vertices
+void SpriteRender::update(int width, int height) {
+	// recompute projection matrix
+	_projection = glm::ortho(0.0f, float(width), float(height), 0.0f, -1.0f, 1.0f);
+	_program.setMatrix4(_program.getUniformLocation("projection"), _projection);
+}
+
+void SpriteRender::draw(const Texture& texture, const Rect& src, const Rect& dst, const glm::vec3& tint) {
 	_program.use();
-
-	//--
-	// Texture2D &texture, glm::vec2 position, glm::vec2 size, float rotate, glm::vec3 color
-	glm::vec2 size = { 512, 512 };
-	glm::vec2 position = { 10, 10 };
-	float rotate = 0;
-	glm::vec3 color = { 1, 1, 1 };
-	//--
-
-	const int SCREEN_WIDTH = 2688; // 1080;
-	const int SCREEN_HEIGHT = 1242; // 1920;
-	glm::mat4 projection = glm::ortho(0.0f, float(SCREEN_WIDTH), float(SCREEN_HEIGHT), 0.0f, -1.0f, 1.0f);
+	texture.use();
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(position, 0.0f));
-
-	// rotate around center
-	model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
-	model = glm::rotate(model, glm::radians(rotate), glm::vec3(0.0f, 0.0f, 1.0f));
-	model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
-
-	model = glm::scale(model, glm::vec3(size, 1.0f));
+	model = glm::translate(model, glm::vec3(dst.x, dst.y, 0.0f));
+	model = glm::scale(model, glm::vec3(dst.w, dst.h, 1.0f));
 
 	_program.setMatrix4(_program.getUniformLocation("model"), model);
-	_program.setMatrix4(_program.getUniformLocation("projection"), projection);
-	_program.setVector3f(_program.getUniformLocation("spriteColor"), color);
-	_texture.use();
+	_program.setVector3f(_program.getUniformLocation("tint"), tint);
+
+	float u0 = src.x / texture.width;
+	float u1 = (src.x + src.w) / texture.width;
+	float v0 = src.y / texture.height;
+	float v1 = (src.y + src.h) / texture.height;
+	float vertices[] = {
+		// pos      // tex
+		0.0f, 0.0f, u0, v0,
+		0.0f, 1.0f, u0, v1,
+		1.0f, 0.0f, u1, v0,
+		1.0f, 1.0f, u1, v1,
+	};
+	_vbo.update(0, vertices, sizeof(vertices));
 
 	_vao.drawTriangleStrips(0, 4);
 }

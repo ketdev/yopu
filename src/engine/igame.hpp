@@ -5,8 +5,8 @@
 class IGame {
    public:
     virtual ~IGame(){};
-    virtual void init(SDL::Renderer& renderer) = 0;
+    virtual void init() = 0;
     virtual void input(SDL_Scancode sc, bool isDown) = 0;
     virtual bool logic() = 0;
-    virtual void render(SDL::Renderer& renderer, int frame) = 0;
+    virtual void render(int frame, int width, int height) = 0;
 };

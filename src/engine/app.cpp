@@ -55,14 +55,12 @@ void Application::run(IGame* game) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    _renderer = SDL::Renderer{SDL::check(SDL_CreateRenderer(
+    _sdl_renderer = SDL::Renderer{SDL::check(SDL_CreateRenderer(
         _window.get(), -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC))};
 
     // SDL::check(
     //     SDL_RenderSetLogicalSize(_renderer.get(), SCREEN_WIDTH, SCREEN_HEIGHT));
-
-    _render.reset(new Render());
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -80,7 +78,7 @@ void Application::run(IGame* game) {
     ImGui_ImplOpenGL3_Init();
 
     // Setup game 
-    _game->init(_renderer);
+    _game->init();
 
     // Start game loop
     _visible = true;
@@ -175,10 +173,7 @@ void Application::_loop() {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Render game
-        _render->draw();
-
-        //_game->render(_renderer, _frame);
+        _game->render(_frame, _width, _height);
 
         //--
         /*TEMP*/ static bool someBoolean;
@@ -194,7 +189,7 @@ void Application::_loop() {
         //--
 
         // Render imgui
-        ImGui::Render();
+        ImGui::SpriteRender();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         ++_frame;

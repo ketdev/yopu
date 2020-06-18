@@ -2,7 +2,7 @@
 #include <vector>
 #include <SDL2/SDL_scancode.h>
 #include <glm/vec2.hpp>
-#include "puyo/puyo.h"
+#include "logic/puyo/puyo.h"
 
 // -- Constants --
 

@@ -81,6 +81,10 @@ void ShaderProgram::setVector3f(uint32_t location, glm::vec3 vec) {
 	use();
 	glUniform3fv(location, 1, reinterpret_cast<float*>(&vec));
 }
+void ShaderProgram::setVector4f(uint32_t location, glm::vec4 vec) {
+	use();
+	glUniform4fv(location, 1, reinterpret_cast<float*>(&vec));
+}
 void ShaderProgram::setMatrix4(uint32_t location, glm::mat4x4 mat){
 	use();
 	glUniformMatrix4fv(location, 1, false, reinterpret_cast<float*>(&mat));

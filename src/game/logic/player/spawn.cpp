@@ -4,7 +4,7 @@
 #include "freefall.h"
 #include "../puyo/puyo.h"
 #include "../puyo/control.h"
-#include "../media/sprite.h"
+#include "../../media/sprite.h"
 #include <algorithm>
 #include <iostream>
 

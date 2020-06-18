@@ -1,37 +1,49 @@
-#include "game.hpp"
+#include "game.h"
+
+#include <game/logic/play.h>
+#include <game/ui/draw.h>
+
+// ----
 
 #include <iostream>
 #include <vector>
 #include <glm/exponential.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 #include <cmath>
 
 #include "entity.h"
 
 // Get our systems
-#include "puyo\puyo.h"
-#include "player\board.h"
+#include "logic\puyo\puyo.h"
+#include "logic\player\board.h"
 
-#include "player\input.h"
-#include "player\spawn.h"
-#include "puyo\control.h"
-#include "player\freefall.h"
-#include "player\resolve.h"
+#include "logic\player\input.h"
+#include "logic\player\spawn.h"
+#include "logic\puyo\control.h"
+#include "logic\player\freefall.h"
+#include "logic\player\resolve.h"
 
-#include "puyo\animate.h"
+#include "logic\puyo\animate.h"
 #include "media\sound.h"
 #include "media\sprite.h"
 
 
+
+
+
 // -- Game Implementation --
 
-void Game::init(SDL::Renderer& renderer) {
+void Game::init() {
     // Load resources
-    _tex = Loader::loadTexture(renderer, ASSET_PATH_TEXTURE);
+    _texture.load(ASSET_PATH_TEXTURE);
+
+
+    _render.reset(new SpriteRender());
 
     // Create our initial entities
-    makeBackground();
     makePlayer(0);
 }
 
@@ -52,6 +64,9 @@ void Game::input(SDL_Scancode sc, bool isDown) {
 bool Game::logic() {
     /*TEMP*/ //std::cout << "-- Logic --------------------------------------------" << std::endl;
 
+    play::Events e;
+    play::step(e);
+
     player::updateInput(_reg);
     player::spawn(_reg);
     puyo::control(_reg);
@@ -61,28 +76,24 @@ bool Game::logic() {
     return true;
 }
 
-void Game::render(SDL::Renderer& renderer, int frame) {
+void Game::render(int frame, int width, int height) {
     /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
+
+    ui::draw(frame, width, height);
+
+
+    _render->update(width, height);
 
     media::soundPlayer(_reg);
     puyo::gravity(_reg);
 
-    media::spriteRender(_reg, renderer);
-
     applyTranslationAnimation();
     applyRotationAnimation();
-    drawPuyos(renderer);
+    drawPuyos();
 }
 
 
 // -- Factories --
-
-entt::entity Game::makeBackground() {
-    auto bg = _reg.create();
-    _reg.emplace<media::Sprite>(bg, media::Texture::Background, 
-        glm::ivec4{ 0, 0, 1080, 1920 }, glm::dvec4{ 0, 0, 1, 1 }); // TODO: take from settings
-    return bg;
-}
 
 entt::entity Game::makePlayer(int index) {
     // Shared puyo pool
@@ -177,7 +188,7 @@ void Game::applyRotationAnimation() {
     }
 }
 
-void Game::drawPuyos(SDL::Renderer& renderer) {    
+void Game::drawPuyos() {
     // Render puyo to screen
     auto view = _reg.view<puyo::Color, puyo::RenderPosition>();
     for (auto& e : view) {
@@ -224,9 +235,9 @@ void Game::drawPuyos(SDL::Renderer& renderer) {
             break;
         }
 
-        SDL_Rect src{ ix * puyo::TILE_SIZE, iy * puyo::TILE_SIZE, puyo::TILE_SIZE, puyo::TILE_SIZE };
-        SDL_Rect dst{ pos.x, pos.y, src.w, src.h };
-        SDL_RenderCopy(renderer.get(), _tex.get(), &src, &dst);
+        Rect src{ ix * puyo::TILE_SIZE, iy * puyo::TILE_SIZE, puyo::TILE_SIZE, puyo::TILE_SIZE };
+        Rect dst{ pos.x, pos.y, src.w, src.h };
+        _render->draw(_texture, src, dst);
     }
 
 }

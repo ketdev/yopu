@@ -72,25 +72,25 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\Release\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\Release\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\ket\dev\libs\SDL2-2.0.12\VC\include;C:\ket\dev\libs\entt\single_include;C:\ket\dev\libs\glm;C:\ket\dev\libs\glew-2.1.0\include;$(ProjectDir)src;$(IncludePath)</IncludePath>
     <LibraryPath>C:\ket\dev\libs\SDL2-2.0.12\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_image-2.0.5\VC\lib\$(PlatformTarget);C:\ket\dev\libs\SDL2_mixer-2.0.4\VC\lib\$(PlatformTarget);C:\ket\dev\libs\glew-2.1.0\lib\Release\$(PlatformTarget);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)dist</OutDir>
   </PropertyGroup>
@@ -164,29 +164,33 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\engine\app.cpp" />
+    <ClCompile Include="src\engine\draw\color_render.cpp" />
     <ClCompile Include="src\engine\graphics\texture.cpp" />
     <ClCompile Include="src\engine\imgui\imgui.cpp" />
     <ClCompile Include="src\engine\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\engine\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\engine\imgui\imgui_impl_sdl.cpp" />
     <ClCompile Include="src\engine\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\engine\system\render.cpp" />
+    <ClCompile Include="src\engine\draw\sprite_render.cpp" />
     <ClCompile Include="src\engine\graphics\shader.cpp" />
     <ClCompile Include="src\engine\graphics\vertex_array.cpp" />
     <ClCompile Include="src\engine\graphics\vertex_buffer.cpp" />
     <ClCompile Include="src\game\game.cpp" />
+    <ClCompile Include="src\game\logic\play.cpp" />
     <ClCompile Include="src\game\media\soundplayer.cpp" />
-    <ClCompile Include="src\game\media\sprite_render.cpp" />
-    <ClCompile Include="src\game\player\resolve.cpp" />
-    <ClCompile Include="src\game\player\input.cpp" />
-    <ClCompile Include="src\game\player\spawn.cpp" />
-    <ClCompile Include="src\game\puyo\animate.cpp" />
-    <ClCompile Include="src\game\puyo\control.cpp" />
-    <ClCompile Include="src\game\player\freefall.cpp" />
+    <ClCompile Include="src\game\media\sprite_render__.cpp" />
+    <ClCompile Include="src\game\logic\player\resolve.cpp" />
+    <ClCompile Include="src\game\logic\player\input.cpp" />
+    <ClCompile Include="src\game\logic\player\spawn.cpp" />
+    <ClCompile Include="src\game\logic\puyo\animate.cpp" />
+    <ClCompile Include="src\game\logic\puyo\control.cpp" />
+    <ClCompile Include="src\game\logic\player\freefall.cpp" />
+    <ClCompile Include="src\game\ui\draw.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\engine\app.hpp" />
+    <ClInclude Include="src\engine\draw\color_render.h" />
     <ClInclude Include="src\engine\graphics\texture.h" />
     <ClInclude Include="src\engine\imgui\imconfig.h" />
     <ClInclude Include="src\engine\imgui\imgui.h" />
@@ -196,31 +200,37 @@
     <ClInclude Include="src\engine\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\engine\imgui\imstb_textedit.h" />
     <ClInclude Include="src\engine\imgui\imstb_truetype.h" />
-    <ClInclude Include="src\engine\system\render.h" />
+    <ClInclude Include="src\engine\draw\sprite_render.h" />
     <ClInclude Include="src\engine\graphics\shader.h" />
     <ClInclude Include="src\engine\graphics\vertex_array.h" />
     <ClInclude Include="src\engine\graphics\vertex_buffer.h" />
     <ClInclude Include="src\engine\igame.hpp" />
     <ClInclude Include="src\engine\loader.hpp" />
+    <ClInclude Include="src\engine\update\drawable.h" />
     <ClInclude Include="src\engine\utils\sdl_utils.h" />
     <ClInclude Include="src\engine\sound.hpp" />
     <ClInclude Include="src\engine\utils\xgl.h" />
     <ClInclude Include="src\game\entity.h" />
-    <ClInclude Include="src\game\game.hpp" />
+    <ClInclude Include="src\game\game.h" />
+    <ClInclude Include="src\game\logic\play.h" />
     <ClInclude Include="src\game\media\sound.h" />
     <ClInclude Include="src\game\media\sprite.h" />
-    <ClInclude Include="src\game\player\board.h" />
-    <ClInclude Include="src\game\player\resolve.h" />
-    <ClInclude Include="src\game\player\input.h" />
-    <ClInclude Include="src\game\player\spawn.h" />
+    <ClInclude Include="src\game\objects\background.h" />
+    <ClInclude Include="src\game\objects\board2.h" />
+    <ClInclude Include="src\game\objects\puyo2.h" />
+    <ClInclude Include="src\game\logic\player\board.h" />
+    <ClInclude Include="src\game\logic\player\resolve.h" />
+    <ClInclude Include="src\game\logic\player\input.h" />
+    <ClInclude Include="src\game\logic\player\spawn.h" />
     <ClInclude Include="src\game\puyo.hpp" />
-    <ClInclude Include="src\game\puyo\animate.h" />
-    <ClInclude Include="src\game\puyo\control.h" />
-    <ClInclude Include="src\game\player\freefall.h" />
-    <ClInclude Include="src\game\puyo\puyo.h" />
+    <ClInclude Include="src\game\logic\puyo\animate.h" />
+    <ClInclude Include="src\game\logic\puyo\control.h" />
+    <ClInclude Include="src\game\logic\player\freefall.h" />
+    <ClInclude Include="src\game\logic\puyo\puyo.h" />
     <ClInclude Include="src\game\settings.h" />
     <ClInclude Include="src\engine\utils\clean_ptr.h" />
     <ClInclude Include="src\engine\utils\no_copy.h" />
+    <ClInclude Include="src\game\ui\draw.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

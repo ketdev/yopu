@@ -10,4 +10,5 @@ struct VertexBuffer {
 	~VertexBuffer();
 
 	void set(const void* data, uint32_t dimension, uint32_t count);
+	void update(uint32_t offset, void* data, uint32_t size);
 };

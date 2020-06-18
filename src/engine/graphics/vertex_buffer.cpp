@@ -16,3 +16,8 @@ void VertexBuffer::set(const void* data, uint32_t dimension, uint32_t count) {
 	glBindBuffer(GL_ARRAY_BUFFER, id);
 	glBufferData(GL_ARRAY_BUFFER, count * dimension * sizeof(float), data, GL_STATIC_DRAW);
 }
+
+void VertexBuffer::update(uint32_t offset, void* data, uint32_t size) {
+	glBindBuffer(GL_ARRAY_BUFFER, id);
+	glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
+}

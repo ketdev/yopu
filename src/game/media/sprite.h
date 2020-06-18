@@ -25,6 +25,6 @@ namespace media {
 
     // -- Systems --
 
-    void spriteRender(registry& reg, SDL::Renderer& renderer);
+    void spriteRender(registry& reg);
 
 }

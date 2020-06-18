@@ -4280,7 +4280,7 @@ void ImGui::EndFrame()
     memset(g.IO.NavInputs, 0, sizeof(g.IO.NavInputs));
 }
 
-void ImGui::Render()
+void ImGui::SpriteRender()
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(g.Initialized);

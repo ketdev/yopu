@@ -1,6 +1,6 @@
 #include "animate.h"
 #include "puyo.h"
-#include "../media/sound.h"
+#include "../../media/sound.h"
 #include <algorithm>
 
 void puyo::gravity(registry& reg) {

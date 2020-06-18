@@ -7,29 +7,31 @@
 #include "settings.h"
 #include "puyo.hpp"
 
+#include "../engine/graphics/texture.h"
+#include "../engine/draw/sprite_render.h"
 
 class Game : public IGame {
 public:
     Game() {}
     virtual ~Game() {}
-    virtual void init(SDL::Renderer& renderer);
+    virtual void init();
     virtual void input(SDL_Scancode sc, bool isDown);
     virtual bool logic();
-    virtual void render(SDL::Renderer& renderer, int frame);
+    virtual void render(int frame, int width, int height);
 
 private: // shared memory
     Settings _settings;
     entt::registry _reg;
 
 private: // resources
-    SDL::Texture _tex;
+    Texture _texture;
+    std::unique_ptr<SpriteRender> _render;
 
 private: // factories
-    entt::entity makeBackground();
     entt::entity makePlayer(int index);
 
 private:  // render systems
     void applyTranslationAnimation();
     void applyRotationAnimation();
-    void drawPuyos(SDL::Renderer& renderer);
+    void drawPuyos();
 };
