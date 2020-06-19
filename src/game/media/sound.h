@@ -1,5 +1,5 @@
 #pragma once
-#include "../entity.h"
+#include <game/object/object.h>
 
 namespace media {
 

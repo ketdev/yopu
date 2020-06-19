@@ -4,7 +4,13 @@
 namespace object {
 
 	struct Puyo2 {
+        // Number of smaller units within a grid cells, 
+        // independent of rendering proportions
+        static constexpr int SubRes = 0x200000;
+
         enum class Type : uint8_t {
+            None,
+
             Red,
             Green,
             Blue,
@@ -18,7 +24,7 @@ namespace object {
         };
 
         Puyo2::Type type;
-        int x, y, ysub;
+        int x, y, ysub = 0;
     };
 
 }

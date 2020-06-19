@@ -1,5 +1,6 @@
 #include "sound.h"
-#include "../entity.h"
+#include <game/object/object.h>
+
 #include "../../engine/sound.hpp"
 #include "../../engine/loader.hpp"
 

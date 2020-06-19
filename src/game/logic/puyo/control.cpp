@@ -1,9 +1,7 @@
 #include "control.h"
 #include "puyo.h"
-#include "../player/board.h"
-#include "../player/input.h"
-#include "../player/freefall.h"
-#include "../player/resolve.h"
+#include <game/object/board.h>
+#include <game/object/player.h>
 #include "../../media/sound.h"
 #include <iostream>
 
@@ -15,10 +13,10 @@ constexpr int ROTATION_FRAMES = 7;
 struct ControlFrame {
     registry& reg;
     const player::Input& input;
-    player::Board& board;
-    const entity& main;
-    const entity& slave;
-    const entity& player;
+    board::Board& board;
+    const object& main;
+    const object& slave;
+    const object& player;
     puyo::Control& control;
     puyo::GridIndex& mainIndex;
     puyo::GridIndex& slaveIndex;
@@ -27,7 +25,7 @@ struct ControlFrame {
 };
 
 // Update move animation
-static void setMove(registry& reg, entt::entity puyo, int dx, int dy, int frames) {
+static void setMove(registry& reg, object puyo, int dx, int dy, int frames) {
     if (reg.has<puyo::TranslateAnimation>(puyo)) {
         auto& anim = reg.get<puyo::TranslateAnimation>(puyo);
         anim.dx += dx * puyo::TILE_SIZE;
@@ -117,7 +115,7 @@ static void applyRotation(const ControlFrame& frame) {
             };
 
             // Ghost row limitation: don't allow rotation to upright rotation on ghost rows when blocked (so we can't push up)
-            if (dst.y < player::Board::ghostRows && dst.x == frame.mainIndex.x) {
+            if (dst.y < board::GhostRows && dst.x == frame.mainIndex.x) {
                 std::cout << "ghost line pushup disallowed" << std::endl;
                 rotable = false;
             }
@@ -308,11 +306,11 @@ void puyo::control(registry& reg) {
 
         // Get input and board from associated player
         if (!reg.has<player::Input>(player) 
-            || !reg.has<player::Board>(player)) {
+            || !reg.has<board::Board>(player)) {
             continue;
         }
         auto& input = reg.get<player::Input>(player);
-        auto& board = reg.get<player::Board>(player);
+        auto& board = reg.get<board::Board>(player);
 
         // Build our control frame
         ControlFrame frame = {

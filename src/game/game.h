@@ -3,9 +3,7 @@
 #include <SDL2/SDL_scancode.h>
 
 #include "../engine/igame.hpp"
-#include "../engine/loader.hpp"
 #include "settings.h"
-#include "puyo.hpp"
 
 #include "../engine/graphics/texture.h"
 #include "../engine/draw/sprite_render.h"

@@ -6,7 +6,7 @@
 #include <engine/draw/color_render.h>
 
 // rendered objects
-#include <game/objects/board2.h>
+#include <game/object/board.h>
 
 struct DrawState {
     ColorRender colorRender;
@@ -40,11 +40,11 @@ void ui::draw(int frame, int width, int height) {
 
     // we need to fit whole board, garbage and score areas
     const int boardCellSize = std::min(
-        width * 20 / 100 / object::Board2::Columns, 
-        height / (object::Board2::Rows + object::Board2::GhostRows));
+        width * 20 / 100 / board::Columns,
+        height / board::Rows);
 
-    const int boardWidth = boardCellSize * object::Board2::Columns;
-    const int boardHeight = boardCellSize * object::Board2::Rows;
+    const int boardWidth = boardCellSize * board::Columns;
+    const int boardHeight = boardCellSize * (board::Rows - board::GhostRows);
     const int boardTopOffset = (height - boardHeight) / 2; // center
 
     const glm::ivec2 nextMargin = { boardCellSize / 5, boardCellSize / 2 };
@@ -87,8 +87,8 @@ void ui::draw(int frame, int width, int height) {
     // player1 board
     glm::vec2 b0offset = { sideMargin + controlColumnWidth, boardTopOffset };
     glm::vec2 cellSize = { boardCellSize, boardCellSize };
-    for (int x = 0; x < object::Board2::Columns; x++) {
-        for (int y = 0; y < object::Board2::Rows; y++) {
+    for (int x = 0; x < board::Columns; x++) {
+        for (int y = 0; y < board::Rows - board::GhostRows; y++) {
             glm::vec2 pos = b0offset + glm::vec2{x * boardCellSize, y * boardCellSize};
             glm::vec4 color = boardCellColor;
             if ((x + y) % 2 == 0)

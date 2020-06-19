@@ -3,6 +3,9 @@
 #include <game/logic/play.h>
 #include <game/ui/draw.h>
 
+#include <game/object/player.h>
+#include <game/object/board.h>
+
 // ----
 
 #include <iostream>
@@ -14,17 +17,11 @@
 #include <glm/mat4x4.hpp>
 #include <cmath>
 
-#include "entity.h"
-
 // Get our systems
+#include "puyo.hpp"
+#include "../engine/loader.hpp"
 #include "logic\puyo\puyo.h"
-#include "logic\player\board.h"
 
-#include "logic\player\input.h"
-#include "logic\player\spawn.h"
-#include "logic\puyo\control.h"
-#include "logic\player\freefall.h"
-#include "logic\player\resolve.h"
 
 #include "logic\puyo\animate.h"
 #include "media\sound.h"
@@ -64,15 +61,9 @@ void Game::input(SDL_Scancode sc, bool isDown) {
 bool Game::logic() {
     /*TEMP*/ //std::cout << "-- Logic --------------------------------------------" << std::endl;
 
-    play::Events e;
-    play::step(e);
+    play::step(_reg);
+    //--
 
-    player::updateInput(_reg);
-    player::spawn(_reg);
-    puyo::control(_reg);
-    player::freefall(_reg);
-    player::resolve(_reg);
-    
     return true;
 }
 
@@ -80,7 +71,7 @@ void Game::render(int frame, int width, int height) {
     /*TEMP*/ //std::cout << "-- Render: (" << frame << ")" << std::endl;
 
     ui::draw(frame, width, height);
-
+    //--
 
     _render->update(width, height);
 
@@ -102,7 +93,7 @@ entt::entity Game::makePlayer(int index) {
 
     auto player = _reg.create();
     _reg.emplace<player::Input>(player, index);     // Control input
-    _reg.emplace<player::Board>(player);            // Game board
+    _reg.emplace<board::Board>(player);            // Game board
     _reg.emplace<player::Score>(player);            // Score
     auto& spawner = _reg.emplace_or_replace<player::Spawner>(player);
     spawner.randgen = randgen;

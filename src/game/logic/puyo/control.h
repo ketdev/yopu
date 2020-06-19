@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-#include "../../entity.h"
+#include <game/object/object.h>
 #include "puyo.h"
 
 namespace puyo {
@@ -24,7 +24,7 @@ namespace puyo {
 
         int splitCounter = 0;           // Delay frames between splitting to freefall
 
-        entity slave;   // can have one slave only
+        object slave;   // can have one slave only
     };
 
     // -- Systems --

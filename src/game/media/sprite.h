@@ -1,5 +1,6 @@
 #pragma once
-#include "../entity.h"
+#include <game/object/object.h>
+
 #include "../../engine/utils/sdl_utils.h"
 #include <glm/vec4.hpp>
 #include <glm/ext/vector_int2.hpp>

@@ -5,7 +5,7 @@
 
 struct SortedSprites {
     int layer;
-    entity entity;
+    object entity;
     bool operator<(const SortedSprites& other) const {
         return layer < other.layer;
     }

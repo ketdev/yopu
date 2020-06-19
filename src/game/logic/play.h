@@ -1,10 +1,7 @@
 #pragma once
+#include <game/object/object.h>
 
 namespace play {
 
-	struct Events {
-
-	};
-
-	void step(const Events& events);
+	void step(registry& reg);
 }

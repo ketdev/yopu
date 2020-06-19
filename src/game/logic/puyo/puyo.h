@@ -1,5 +1,5 @@
 #pragma once
-#include "../../entity.h"
+#include <game/object/object.h>
 
 /*TEMP*/ #include "../../puyo.hpp"
 
@@ -30,7 +30,7 @@ namespace puyo {
     };
 
     struct Parent {
-        entity player;  // Associated Player entity
+        object player;  // Associated Player entity
     };
 
 }

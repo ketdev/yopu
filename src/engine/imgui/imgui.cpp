@@ -2278,8 +2278,8 @@ static void SetCursorPosYAndSetupDummyPrevLine(float pos_y, float line_height)
     window->DC.CursorMaxPos.y = ImMax(window->DC.CursorMaxPos.y, pos_y);
     window->DC.CursorPosPrevLine.y = window->DC.CursorPos.y - line_height;  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
     window->DC.PrevLineSize.y = (line_height - g.Style.ItemSpacing.y);      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
-    if (ImGuiColumns* columns = window->DC.CurrentColumns)
-        columns->LineMinY = window->DC.CursorPos.y;                         // Setting this so that cell Y position are set properly
+    if (ImGuiColumns* Columns = window->DC.CurrentColumns)
+        Columns->LineMinY = window->DC.CursorPos.y;                         // Setting this so that cell Y position are set properly
 }
 
 // Use case A: Begin() called from constructor with items_height<0, then called again from Sync() in StepNo 1
@@ -10366,13 +10366,13 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             ImGui::TreePop();
         }
 
-        static void NodeColumns(const ImGuiColumns* columns)
+        static void NodeColumns(const ImGuiColumns* Columns)
         {
-            if (!ImGui::TreeNode((void*)(uintptr_t)columns->ID, "Columns Id: 0x%08X, Count: %d, Flags: 0x%04X", columns->ID, columns->Count, columns->Flags))
+            if (!ImGui::TreeNode((void*)(uintptr_t)Columns->ID, "Columns Id: 0x%08X, Count: %d, Flags: 0x%04X", Columns->ID, Columns->Count, Columns->Flags))
                 return;
-            ImGui::BulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", columns->OffMaxX - columns->OffMinX, columns->OffMinX, columns->OffMaxX);
-            for (int column_n = 0; column_n < columns->Columns.Size; column_n++)
-                ImGui::BulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", column_n, columns->Columns[column_n].OffsetNorm, GetColumnOffsetFromNorm(columns, columns->Columns[column_n].OffsetNorm));
+            ImGui::BulletText("Width: %.1f (MinX: %.1f, MaxX: %.1f)", Columns->OffMaxX - Columns->OffMinX, Columns->OffMinX, Columns->OffMaxX);
+            for (int column_n = 0; column_n < Columns->Columns.Size; column_n++)
+                ImGui::BulletText("Column %02d: OffsetNorm %.3f (= %.1f px)", column_n, Columns->Columns[column_n].OffsetNorm, GetColumnOffsetFromNorm(Columns, Columns->Columns[column_n].OffsetNorm));
             ImGui::TreePop();
         }
 
