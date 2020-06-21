@@ -6,10 +6,10 @@
 #include <map>
 #include <set>
 
-#include <game/logic/puyo/control.h>
-
 #include <game/object/player.h>
 #include <game/object/board.h>
+
+#include <game/media/sound.h>
 
 /*TEMP*/ #include <game/logic/puyo/puyo.h>
 /*TEMP*/ #include <game/logic/puyo/animate.h>
@@ -20,39 +20,17 @@
 
 static void updateInput(registry& reg);
 static void spawn(registry& reg);
+static void control(registry& reg);
 static void resolve(registry& reg);
 static void freefall(registry& reg);
 
 
-
-struct Constants {
-
-};
-
-struct Player {
-    enum class Phase {
-        Settled,
-        Control,
-        Freefall,
-        Chain,
-        GameOverWin,
-        GameOverLose
-    } phase;
-};
-
-struct PuyoGameState {
-    std::vector<Player> players;
-
-};
-
-void play::step(registry& reg) {
-    static PuyoGameState gameState;
-
+void play::step(State& play, registry& reg) {
 
     updateInput(reg);
     spawn(reg);
 
-    puyo::control(reg);
+    control(reg);
 
     freefall(reg);
     resolve(reg);
@@ -128,6 +106,50 @@ void play::step(registry& reg) {
     //        break;
     //    }
     //}
+}
+
+// --
+
+static void updateInput(registry& _reg) {
+    auto view = _reg.view<player::Input>();
+    for (auto& e : view) {
+        auto& input = view.get<player::Input>(e);
+        for (size_t i = 0; i < player::InputKey::_Count; i++) {
+
+            if (input.keys[i].isDown) {
+                input.keys[i].counter++;
+            }
+            else {
+                input.keys[i].counter = -1;
+            }
+
+            // Calculate repeat triggers
+            input.keys[i].repeat =
+                // initial press
+                (input.keys[i].counter == 0)
+                // first repeat
+                || (input.keys[i].counter == player::Input::buttonRepeatDelay)
+                // subsequent repeats
+                || (input.keys[i].counter > player::Input::buttonRepeatDelay
+                    && ((input.keys[i].counter - player::Input::buttonRepeatDelay) % player::Input::buttonSubsequentDelay) == 0);
+        }
+
+        // Accumulate move input triggers
+        input.dx = 0;
+        input.dr = 0;
+
+        if (input.keys[player::InputKey::Left].repeat) input.dx--;
+        if (input.keys[player::InputKey::Right].repeat) input.dx++;
+
+        if (input.keys[player::InputKey::RotateLeft].counter == 0) input.dr--; // no button repeat, only first press
+        if (input.keys[player::InputKey::RotateRight].counter == 0) input.dr++; // no button repeat, only first press
+
+        input.softDrop = input.keys[player::InputKey::Down].isDown; // no repeat, computed on every frame
+
+        if (input.dx || input.dr || input.softDrop)
+            std::cout << "Input X:" << input.dx << " R:" << input.dr << " SD:" << input.softDrop << std::endl;
+    }
+
 }
 
 // -- 
@@ -255,6 +277,347 @@ static void spawn(registry& reg) {
         reg.remove<player::Idle>(player);
     }
 }
+
+//==================================
+
+
+// Accumulate move input triggers
+constexpr int halfTile = puyo::DROP_RES / 2;
+constexpr int LATERAL_SHIFT_FRAMES = 2;
+constexpr int ROTATION_FRAMES = 7;
+
+struct ControlFrame {
+    registry& reg;
+    const player::Input& input;
+    board::Board& board;
+    const object& main;
+    const object& slave;
+    const object& player;
+    puyo::Control& control;
+    puyo::GridIndex& mainIndex;
+    puyo::GridIndex& slaveIndex;
+    puyo::RenderPosition& mainPos;
+    puyo::RenderPosition& slavePos;
+};
+
+// Update move animation
+static void setMove(registry& reg, object puyo, int dx, int dy, int frames) {
+    if (reg.has<puyo::TranslateAnimation>(puyo)) {
+        auto& anim = reg.get<puyo::TranslateAnimation>(puyo);
+        anim.dx += dx * puyo::TILE_SIZE;
+        anim.dy += dy * puyo::TILE_SIZE;
+        anim.frames = frames;
+    }
+    else {
+        reg.emplace<puyo::TranslateAnimation>(puyo, dx * puyo::TILE_SIZE, dy * puyo::TILE_SIZE, frames);
+    }
+};
+
+// Update rotate animation
+static void setRotate(registry& reg, entt::entity puyo, int srcDx, int srcDy, int dstDx, int dstDy, int frames) {
+    if (reg.has<puyo::RotateAnimation>(puyo)) {
+        auto& anim = reg.get<puyo::RotateAnimation>(puyo);
+        // Retain source delta
+        anim.dstDx = dstDx * puyo::TILE_SIZE;
+        anim.dstDy = dstDy * puyo::TILE_SIZE;
+        anim.frames = frames;
+    }
+    else {
+        reg.emplace<puyo::RotateAnimation>(puyo,
+            srcDx * puyo::TILE_SIZE, srcDy * puyo::TILE_SIZE, // Source delta
+            dstDx * puyo::TILE_SIZE, dstDy * puyo::TILE_SIZE, // Destination delta
+            frames);
+    }
+};
+
+
+// Applies lateral movement
+// + Animation: Translate
+// + State: Move sfx
+static void applyMovement(const ControlFrame& frame) {
+
+    // Don't allow movement if already moving
+    if (!frame.control.shift && !frame.control.locked && frame.input.dx != 0) {
+
+        // Check if destination is blocked our out of bounds
+        bool blocked = frame.board.isBlocked({ frame.mainIndex.x + frame.input.dx, frame.mainIndex.y })
+            || frame.board.isBlocked({ frame.slaveIndex.x + frame.input.dx, frame.slaveIndex.y });
+
+        // Acknowledge movement
+        if (!blocked) {
+
+            // Make smooth animations
+            setMove(frame.reg, frame.main, frame.input.dx, 0, LATERAL_SHIFT_FRAMES);
+            setMove(frame.reg, frame.slave, frame.input.dx, 0, LATERAL_SHIFT_FRAMES);
+            frame.control.shift = true;
+
+            // Update pair coordinates
+            frame.mainIndex.x += frame.input.dx;
+            frame.slaveIndex.x += frame.input.dx;
+
+            // State sound effect
+            media::play(frame.reg, media::SoundEffect::Move);
+        }
+    }
+    else {
+        frame.control.shift = false;
+    }
+}
+
+// Applies slave rotation with pushes
+// + Animation: Rotation, Translate
+// + State: Rotate sfx
+static void applyRotation(const ControlFrame& frame) {
+    if (!frame.control.locked && frame.input.dr != 0) {
+
+        bool rotable = true;
+        auto dst = puyo::GridIndex{
+            frame.mainIndex.x - (frame.slaveIndex.y - frame.mainIndex.y) * frame.input.dr,
+            frame.mainIndex.y + (frame.slaveIndex.x - frame.mainIndex.x) * frame.input.dr
+        };
+        auto diag = puyo::GridIndex{
+            dst.x - frame.mainIndex.x + frame.slaveIndex.x,
+            dst.y - frame.mainIndex.y + frame.slaveIndex.y
+        };
+        auto push = puyo::GridIndex{ 0, 0 };
+
+        // Check if destination or diagonal is blocked
+        if (frame.board.isBlocked(dst) || frame.board.isBlocked(diag)) {
+
+            // Opposite cell check
+            auto opposite = puyo::GridIndex{
+                2 * frame.mainIndex.x - dst.x,
+                2 * frame.mainIndex.y - dst.y,
+            };
+
+            // Ghost row limitation: don't allow rotation to upright rotation on ghost rows when blocked (so we can't push up)
+            if (dst.y < board::GhostRows && dst.x == frame.mainIndex.x) {
+                std::cout << "ghost line pushup disallowed" << std::endl;
+                rotable = false;
+            }
+
+            // Double-rotation
+            if (frame.board.isBlocked(opposite)) {
+                frame.control.rotationCounter++;
+                if (frame.control.rotationCounter % 2 == 1) {
+                    rotable = false;
+                }
+                // Perform a quick turn
+                dst = {
+                    2 * frame.mainIndex.x - frame.slaveIndex.x,
+                    2 * frame.mainIndex.y - frame.slaveIndex.y,
+                };
+            }
+
+            // Push back in opposite direction
+            if (rotable) {
+                push = {
+                    frame.mainIndex.x - dst.x,
+                    frame.mainIndex.y - dst.y
+                };
+            }
+        }
+
+        // Acknowledge rotation
+        if (rotable) {
+
+            // Reset rotation counter
+            frame.control.rotationCounter = 0;
+
+            // Make smooth animations : Can update previous animations if any
+            if (push.x != 0 || push.y != 0) {
+                setMove(frame.reg, frame.main, push.x, push.y, LATERAL_SHIFT_FRAMES);
+                setMove(frame.reg, frame.slave, push.x, push.y, LATERAL_SHIFT_FRAMES);
+            }
+            setRotate(frame.reg, frame.slave,
+                frame.slaveIndex.x - frame.mainIndex.x,
+                frame.slaveIndex.y - frame.mainIndex.y,
+                dst.x - frame.mainIndex.x,
+                dst.y - frame.mainIndex.y, ROTATION_FRAMES);
+
+            // Update pair coordinates
+            frame.mainIndex.x += push.x;
+            frame.mainIndex.y += push.y;
+            frame.slaveIndex.x = dst.x + push.x;
+            frame.slaveIndex.y = dst.y + push.y;
+
+            // upward push sets just above midline height
+            if (push.y < 0) {
+                std::cout << "Pushing y" << push.y << ", drop " << frame.mainIndex.drop << " -> 15" << std::endl;
+                frame.control.pushupCounter++;
+                frame.mainPos.y -= frame.mainIndex.drop * puyo::TILE_SIZE / puyo::DROP_RES;
+                frame.slavePos.y -= frame.slaveIndex.drop * puyo::TILE_SIZE / puyo::DROP_RES;
+                frame.mainIndex.drop = frame.slaveIndex.drop = puyo::DROP_RES / 2;
+                frame.mainPos.y += frame.mainIndex.drop * puyo::TILE_SIZE / puyo::DROP_RES;
+                frame.slavePos.y += frame.slaveIndex.drop * puyo::TILE_SIZE / puyo::DROP_RES;
+            }
+
+            // State sound effect
+            media::play(frame.reg, media::SoundEffect::Rotate);
+        }
+    }
+
+}
+
+// Applies drop with Grace Period and soft drop
+// + Animation: Bouncing
+// + State: Drop sfx
+static void applyDrop(const ControlFrame& frame) {
+
+    // Accumulate move input triggers
+    int dropSpeed = frame.control.dropSpeed;
+    bool softDrop = frame.input.softDrop;
+
+    if (!frame.control.locked && softDrop && puyo::Control::softDropSpeed > frame.control.dropSpeed) {
+        dropSpeed = puyo::Control::softDropSpeed;
+    }
+
+    // limit drop to end of tile, 
+    // so softdrop can only place at mid or top states
+    if (frame.mainIndex.drop + dropSpeed > puyo::DROP_RES) dropSpeed = puyo::DROP_RES - frame.mainIndex.drop;
+
+    // Applying drop speed
+    frame.mainIndex.drop += dropSpeed;
+    frame.slaveIndex.drop += dropSpeed;
+    frame.mainPos.y += dropSpeed * puyo::TILE_SIZE / puyo::DROP_RES;
+    frame.slavePos.y += dropSpeed * puyo::TILE_SIZE / puyo::DROP_RES;
+
+    if (!frame.control.locked) {
+        // Check if cell below  is blocked our out of bounds
+        bool mainBlocked = frame.board.isBlocked({ frame.mainIndex.x, frame.mainIndex.y + 1 });
+        bool slaveBlocked = frame.board.isBlocked({ frame.slaveIndex.x, frame.slaveIndex.y + 1 });
+        bool blocked = mainBlocked || slaveBlocked;
+
+        // Going on to the next cell
+        if (!blocked && frame.mainIndex.drop == puyo::DROP_RES) {
+            frame.mainIndex.drop = frame.slaveIndex.drop = 0;
+            frame.mainIndex.y++, frame.slaveIndex.y++;
+        }
+
+        // Grace period at the bottom
+        if (blocked && frame.mainIndex.drop == puyo::DROP_RES) {
+            // Start bounce
+            // In Tsu, plays bounce right after passing half a cell, 
+            // but drop display position is different (rendered a half tile ahead)
+            // Instead, we play bounce animations but without delaying gameplay
+            if (!frame.reg.has<puyo::BounceAnimation>(frame.main)
+                && !frame.reg.has<puyo::BounceAnimation>(frame.slave)) {
+                // Both bounce if stacked on top of each other
+                bool stacked = (frame.mainIndex.x == frame.slaveIndex.x);
+
+                // State bouncing animation
+                if (mainBlocked || stacked) {
+                    frame.reg.emplace<puyo::BounceAnimation>(frame.main);
+                }
+                if (slaveBlocked || stacked) {
+                    frame.reg.emplace<puyo::BounceAnimation>(frame.slave);
+                }
+
+                // State placement sound effect 
+                media::play(frame.reg, media::SoundEffect::Drop);
+            }
+
+            frame.control.graceCounter++;
+            if (softDrop) { // skip grace period when soft dropping
+                frame.control.graceCounter = frame.control.gracePeriod;
+            }
+        }
+
+        // Grace period override
+        if (blocked && frame.control.pushupCounter >= puyo::Control::maxPushups) {
+            std::cout << "Max pushups, Locking!" << std::endl;
+            frame.control.locked = true;
+        }
+
+        // Lock the pair at end of grace period
+        if (blocked && frame.mainIndex.drop == puyo::DROP_RES && frame.control.graceCounter >= puyo::Control::gracePeriod) {
+            std::cout << "Locked!" << std::endl;
+            frame.control.locked = true;
+        }
+    }
+}
+
+// After control is locked and animations finished, separate puyos and either freefall or place on board
+// - Animation: Blinking
+static void pairSplit(const ControlFrame& frame) {
+
+    // Wait for any rotation animations to finish
+    bool rotating = frame.reg.has<puyo::RotateAnimation>(frame.slave);
+
+    // Pair split when reached bottom and is locked out
+    if (!rotating && frame.control.locked && frame.mainIndex.drop == puyo::DROP_RES) {
+        std::cout << "pair split" << std::endl;
+
+        // Delay placement
+        // On Tsu, slave has an additional frame delay, here we do them symetrical
+        if (frame.control.splitCounter == puyo::Control::splitFallDelay) {
+            frame.reg.remove<puyo::Control>(frame.main);
+            frame.reg.remove<puyo::BlinkingAnimation>(frame.main);
+
+            // Set on board
+            frame.board.setCell(frame.mainIndex, frame.main);
+            frame.board.setCell(frame.slaveIndex, frame.slave);
+
+            // Enter freefalling stage
+            frame.reg.emplace_or_replace<player::Freefalling>(frame.player);
+            frame.reg.emplace<player::Chain>(frame.player);
+        }
+
+        // Advance counter
+        frame.control.splitCounter++;
+    }
+}
+
+// CONTROL SYSTEM [Puyo, Control]
+//  Move, Rotate and soft drop a puyo
+//  Adds Falling Puyo pair after end of user control
+//  Adds Animation: Movement, Rotation, Bounce
+//  Plays Sound: Move, Rotate, Drop
+static void control(registry& reg) {
+    auto view = reg.view<puyo::GridIndex, puyo::RenderPosition, puyo::Parent, puyo::Control>();
+    for (auto& main : view) {
+        // Get main and slave structures
+        auto& mainIndex = view.get<puyo::GridIndex>(main);
+        auto& control = view.get<puyo::Control>(main);
+        auto& player = view.get<puyo::Parent>(main).player;
+        auto& slave = control.slave;
+        auto& slaveIndex = reg.get<puyo::GridIndex>(slave);
+        auto& mainPos = view.get<puyo::RenderPosition>(main);
+        auto& slavePos = reg.get<puyo::RenderPosition>(slave);
+
+        // Get input and board from associated player
+        if (!reg.has<player::Input>(player)
+            || !reg.has<board::Board>(player)) {
+            continue;
+        }
+        auto& input = reg.get<player::Input>(player);
+        auto& board = reg.get<board::Board>(player);
+
+        // Build our control frame
+        ControlFrame frame = {
+            reg,
+            input,
+            board,
+            main,
+            slave,
+            player,
+            control,
+            mainIndex,
+            slaveIndex,
+            mainPos,
+            slavePos
+        };
+
+        applyMovement(frame);
+        applyRotation(frame);
+        applyDrop(frame);
+        pairSplit(frame);
+    }
+
+}
+
+
+//==================================
 
 // -- 
 
@@ -488,50 +851,6 @@ static void resolve(registry& reg) {
         }
 
     }
-}
-
-// --
-
-static void updateInput(registry& _reg) {
-    auto view = _reg.view<player::Input>();
-    for (auto& e : view) {
-        auto& input = view.get<player::Input>(e);
-        for (size_t i = 0; i < player::InputKey::_Count; i++) {
-
-            if (input.keys[i].isDown) {
-                input.keys[i].counter++;
-            }
-            else {
-                input.keys[i].counter = -1;
-            }
-
-            // Calculate repeat triggers
-            input.keys[i].repeat =
-                // initial press
-                (input.keys[i].counter == 0)
-                // first repeat
-                || (input.keys[i].counter == player::Input::buttonRepeatDelay)
-                // subsequent repeats
-                || (input.keys[i].counter > player::Input::buttonRepeatDelay
-                    && ((input.keys[i].counter - player::Input::buttonRepeatDelay) % player::Input::buttonSubsequentDelay) == 0);
-        }
-
-        // Accumulate move input triggers
-        input.dx = 0;
-        input.dr = 0;
-
-        if (input.keys[player::InputKey::Left].repeat) input.dx--;
-        if (input.keys[player::InputKey::Right].repeat) input.dx++;
-
-        if (input.keys[player::InputKey::RotateLeft].counter == 0) input.dr--; // no button repeat, only first press
-        if (input.keys[player::InputKey::RotateRight].counter == 0) input.dr++; // no button repeat, only first press
-
-        input.softDrop = input.keys[player::InputKey::Down].isDown; // no repeat, computed on every frame
-
-        if (input.dx || input.dr || input.softDrop)
-            std::cout << "Input X:" << input.dx << " R:" << input.dr << " SD:" << input.softDrop << std::endl;
-    }
-
 }
 
 // --

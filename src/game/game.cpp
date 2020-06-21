@@ -61,7 +61,7 @@ void Game::input(SDL_Scancode sc, bool isDown) {
 bool Game::logic() {
     /*TEMP*/ //std::cout << "-- Logic --------------------------------------------" << std::endl;
 
-    play::step(_reg);
+    play::step(_play, _reg);
     //--
 
     return true;

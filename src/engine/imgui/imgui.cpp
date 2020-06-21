@@ -681,9 +681,9 @@ CODE
      are going to be created:
 
        Begin("MyWindow");
-       Button("Play");        // Label = "Play",   ID = hash of ("MyWindow", "Play")
-       Button("Play##foo1");  // Label = "Play",   ID = hash of ("MyWindow", "Play##foo1")  // Different from above
-       Button("Play##foo2");  // Label = "Play",   ID = hash of ("MyWindow", "Play##foo2")  // Different from above
+       Button("State");        // Label = "State",   ID = hash of ("MyWindow", "State")
+       Button("State##foo1");  // Label = "State",   ID = hash of ("MyWindow", "State##foo1")  // Different from above
+       Button("State##foo2");  // Label = "State",   ID = hash of ("MyWindow", "State##foo2")  // Different from above
        End();
 
    - If you want to completely hide the label, but still need an ID:

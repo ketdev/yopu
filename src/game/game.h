@@ -2,6 +2,8 @@
 #include <entt/entt.hpp>
 #include <SDL2/SDL_scancode.h>
 
+#include <game/logic/play.h>
+
 #include "../engine/igame.hpp"
 #include "settings.h"
 
@@ -20,6 +22,8 @@ public:
 private: // shared memory
     Settings _settings;
     entt::registry _reg;
+
+    play::State _play;
 
 private: // resources
     Texture _texture;

@@ -20,10 +20,10 @@ void puyo::gravity(registry& reg) {
         // Check if reached destination
         if (gravity.distance == 0) {
 
-            // Play bouncing animation
+            // State bouncing animation
             reg.emplace_or_replace<puyo::BounceAnimation>(puyo);
 
-            // Play placement sound effect 
+            // State placement sound effect 
             media::play(reg, media::SoundEffect::Drop);
 
             // Finished with gravity

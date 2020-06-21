@@ -180,7 +180,6 @@
     <ClCompile Include="src\game\media\soundplayer.cpp" />
     <ClCompile Include="src\game\media\sprite_render__.cpp" />
     <ClCompile Include="src\game\logic\puyo\animate.cpp" />
-    <ClCompile Include="src\game\logic\puyo\control.cpp" />
     <ClCompile Include="src\game\ui\draw.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -217,7 +216,6 @@
     <ClInclude Include="src\game\object\board.h" />
     <ClInclude Include="src\game\puyo.hpp" />
     <ClInclude Include="src\game\logic\puyo\animate.h" />
-    <ClInclude Include="src\game\logic\puyo\control.h" />
     <ClInclude Include="src\game\logic\puyo\puyo.h" />
     <ClInclude Include="src\game\settings.h" />
     <ClInclude Include="src\engine\utils\clean_ptr.h" />
